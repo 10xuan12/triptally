@@ -1,0 +1,21 @@
+{
+  "name": "triptally",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.12.0",
+    "nuxt": "^3.13.0"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "vue": "^3.4.0",
+    "vue-chartjs": "^5.3.4"
+  }
+}

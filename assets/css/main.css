@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#__nuxt {
+  height: 100%;
+}
+
+body {
+  @apply bg-paper text-ink font-body antialiased;
+  /* Prevent iOS Safari from rubber-banding the whole page during quick entry */
+  overscroll-behavior-y: contain;
+}
+
+/* Card surface: the recurring container for trips + list items. Plain
+   border, no decorative tear-line — "精簡現代工具" direction drops the
+   boarding-pass-stub motif in favor of a simple bordered card. */
+.ticket {
+  @apply bg-card rounded-card border border-line relative overflow-hidden;
+}
+
+/* Respect reduced-motion preference site-wide */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
