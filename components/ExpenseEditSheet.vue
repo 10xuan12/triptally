@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Expense, ExpenseCategory, PaymentMethod } from '~/types'
-import { CATEGORY_META, PAYMENT_META } from '~/types/constants'
+import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from '~/types/constants'
 import { getRate } from '~/services/exchangeRateService'
 
 const props = defineProps<{
@@ -10,6 +10,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ saved: []; cancel: [] }>()
 
+const { t } = useI18n()
 const { updateExpense } = useExpenses()
 
 const amountText = ref(String(props.expense.amountForeign))
@@ -49,7 +50,7 @@ async function ensureTripRate() {
   try {
     tripRateInfo.value = await getRate(props.tripCurrency, props.homeCurrency)
   } catch (err) {
-    rateError.value = err instanceof Error ? err.message : '無法取得匯率，請檢查網路連線'
+    rateError.value = err instanceof Error ? err.message : t('quickAdd.rateError')
   } finally {
     loadingRate.value = false
   }
@@ -100,7 +101,7 @@ function handleSave() {
     })
     emit('saved')
   } catch (err) {
-    saveError.value = err instanceof Error ? err.message : '更新失敗，請再試一次'
+    saveError.value = err instanceof Error ? err.message : t('tripForm.updateFailed')
   } finally {
     saving.value = false
   }
@@ -132,17 +133,17 @@ onUnmounted(() => {
 <template>
   <div class="fixed inset-x-0 z-30 bg-paper flex flex-col" :style="viewportStyle">
     <header class="flex items-center justify-between px-5 pt-6 pb-4 shrink-0">
-      <button type="button" aria-label="取消" class="text-muted text-2xl leading-none" @click="emit('cancel')">
+      <button type="button" :aria-label="$t('common.cancel')" class="text-muted text-2xl leading-none" @click="emit('cancel')">
         &times;
       </button>
-      <p class="font-mono text-xs text-muted uppercase tracking-widest">編輯花費</p>
+      <p class="font-mono text-xs text-muted uppercase tracking-widest">{{ $t('expenseEdit.title') }}</p>
       <span class="w-6" aria-hidden="true" />
     </header>
 
     <form class="px-5 flex-1 flex flex-col gap-4 pb-6 overflow-y-auto min-h-0" @submit.prevent="handleSave">
       <div>
         <div class="flex items-center justify-between mb-2">
-          <label class="font-body text-xs font-medium text-muted">金額</label>
+          <label class="font-body text-xs font-medium text-muted">{{ $t('quickAdd.amount') }}</label>
           <div class="flex gap-1.5">
             <button
               type="button"
@@ -175,47 +176,47 @@ onUnmounted(() => {
         </p>
         <template v-if="amountCurrencyMode === 'trip'">
           <p v-if="rateError" class="font-body text-xs text-danger mt-1">{{ rateError }}</p>
-          <p v-else-if="loadingRate" class="font-mono text-xs text-muted mt-1">正在取得匯率…</p>
+          <p v-else-if="loadingRate" class="font-mono text-xs text-muted mt-1">{{ $t('expenseEdit.loadingRate') }}</p>
           <p v-else-if="tripRateInfo" class="font-mono text-xs text-muted mt-1">
-            {{ initialMode === 'trip' ? '匯率沿用建立時凍結的值，不會重新計算' : '已取得目前匯率並凍結，往後編輯不會再變動' }}
+            {{ initialMode === 'trip' ? $t('expenseEdit.frozenRate') : $t('expenseEdit.freshRate') }}
           </p>
         </template>
       </div>
 
       <div>
-        <p class="font-body text-xs font-medium text-muted mb-2">分類</p>
+        <p class="font-body text-xs font-medium text-muted mb-2">{{ $t('quickAdd.category') }}</p>
         <div class="flex flex-wrap gap-2">
           <button
-            v-for="(meta, key) in CATEGORY_META"
+            v-for="key in EXPENSE_CATEGORIES"
             :key="key"
             type="button"
             class="font-body text-sm rounded-lg px-3 py-1.5 border"
             :class="category === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'"
-            @click="category = key as ExpenseCategory"
+            @click="category = key"
           >
-            {{ meta.label }}
+            {{ $t(`category.${key}`) }}
           </button>
         </div>
       </div>
 
       <div>
-        <p class="font-body text-xs font-medium text-muted mb-2">付款方式</p>
+        <p class="font-body text-xs font-medium text-muted mb-2">{{ $t('quickAdd.paymentMethod') }}</p>
         <div class="flex flex-wrap gap-2">
           <button
-            v-for="(meta, key) in PAYMENT_META"
+            v-for="key in PAYMENT_METHODS"
             :key="key"
             type="button"
             class="font-body text-sm rounded-lg px-3 py-1.5 border"
             :class="paymentMethod === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'"
-            @click="paymentMethod = key as PaymentMethod"
+            @click="paymentMethod = key"
           >
-            {{ meta.label }}
+            {{ $t(`payment.${key}`) }}
           </button>
         </div>
       </div>
 
       <div>
-        <label class="font-body text-xs font-medium text-muted block mb-2">日期</label>
+        <label class="font-body text-xs font-medium text-muted block mb-2">{{ $t('quickAdd.date') }}</label>
         <input
           v-model="date"
           type="date"
@@ -224,11 +225,11 @@ onUnmounted(() => {
       </div>
 
       <div>
-        <label class="font-body text-xs font-medium text-muted block mb-2">備註</label>
+        <label class="font-body text-xs font-medium text-muted block mb-2">{{ $t('expenseEdit.note') }}</label>
         <input
           v-model="note"
           type="text"
-          placeholder="備註（選填）"
+          :placeholder="$t('expenseEdit.notePlaceholder')"
           class="w-full font-body border border-line rounded-lg px-3 py-2 bg-card text-ink"
         >
       </div>
@@ -243,7 +244,7 @@ onUnmounted(() => {
           :disabled="!canSave"
           class="w-full font-body text-base font-semibold text-white bg-pine rounded-lg py-4 disabled:opacity-40 active:scale-[0.98] transition-transform"
         >
-          儲存
+          {{ $t('common.save') }}
         </button>
       </div>
     </form>

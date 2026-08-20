@@ -1,0 +1,121 @@
+{
+  "app": {
+    "title": "TripTally",
+    "tagline": "花一次錢，記一次帳。",
+    "brand": "Selina AI Studio"
+  },
+  "common": {
+    "back": "返回",
+    "close": "關閉",
+    "cancel": "取消",
+    "save": "儲存",
+    "edit": "編輯",
+    "delete": "刪除"
+  },
+  "home": {
+    "yourTrips": "你的旅行",
+    "addTrip": "+ 新增行程",
+    "noTrips": "還沒有行程",
+    "noTripsHint": "建立第一趟旅行，開始記錄花費",
+    "createTrip": "+ 建立行程",
+    "quickAdd": "快速記帳",
+    "dateNotSet": "日期未設定",
+    "dateFrom": "{date} 起",
+    "dateUntil": "至 {date}",
+    "remaining": "剩餘",
+    "overBudget": "超出",
+    "settingsLink": "設定"
+  },
+  "tripForm": {
+    "createTitle": "建立行程",
+    "editTitle": "編輯行程",
+    "name": "行程名稱",
+    "namePlaceholder": "例如：泰國曼谷",
+    "tripCurrency": "旅行幣別",
+    "homeCurrency": "本國幣別",
+    "tripCurrencyPlaceholder": "例如 THB",
+    "homeCurrencyPlaceholder": "例如 TWD",
+    "moreOptions": "更多選項",
+    "startDate": "開始日期",
+    "endDate": "結束日期",
+    "budget": "預算（本國幣別）",
+    "budgetPlaceholder": "選填",
+    "createFailed": "建立行程失敗，請再試一次",
+    "updateFailed": "更新失敗，請再試一次",
+    "deleteTrip": "刪除整個行程",
+    "deleteConfirm": "這會刪除整個行程與其中所有花費紀錄，無法復原，確定要刪除嗎？"
+  },
+  "currencySelect": {
+    "placeholder": "選擇幣別",
+    "searchPlaceholder": "搜尋幣別代碼"
+  },
+  "quickAdd": {
+    "selectTrip": "選擇要記帳的行程",
+    "noTrips": "尚未建立行程。",
+    "amount": "金額",
+    "cachedRate": "使用快取匯率",
+    "rateError": "無法取得匯率，請檢查網路連線",
+    "category": "分類",
+    "paymentMethod": "付款方式",
+    "date": "日期",
+    "addNote": "+ 加備註",
+    "notePlaceholder": "備註（選填），例如：河粉",
+    "saved": "已儲存",
+    "saveFailed": "儲存失敗，請再試一次"
+  },
+  "expenseEdit": {
+    "title": "編輯花費",
+    "note": "備註",
+    "notePlaceholder": "備註（選填）",
+    "loadingRate": "正在取得匯率…",
+    "frozenRate": "匯率沿用建立時凍結的值，不會重新計算",
+    "freshRate": "已取得目前匯率並凍結，往後編輯不會再變動",
+    "deleteConfirm": "確定要刪除這筆花費紀錄嗎？"
+  },
+  "dashboard": {
+    "notFound": "找不到這趟行程。",
+    "defaultTripName": "行程",
+    "totalSpent": "總花費（{currency}）",
+    "budget": "預算",
+    "avgPerDay": "日均花費",
+    "perDay": "/天",
+    "categoryBreakdown": "分類佔比",
+    "noExpenses": "尚無花費紀錄",
+    "expenseList": "花費紀錄",
+    "cachedRateSuffix": " · 快取匯率"
+  },
+  "settings": {
+    "title": "設定",
+    "backupSection": "備份與還原",
+    "backupDescription": "所有資料只存在這台裝置的瀏覽器裡，沒有雲端同步。建議定期匯出備份，換裝置或清除瀏覽器資料前尤其重要。",
+    "exportTitle": "匯出備份",
+    "exportSummary": "{trips} 個行程 · {expenses} 筆花費紀錄",
+    "exportButton": "下載備份檔（JSON）",
+    "exportSuccess": "已匯出 {trips} 個行程、{expenses} 筆花費紀錄",
+    "importTitle": "匯入備份",
+    "importDescription": "會覆蓋目前裝置上的所有行程與花費紀錄",
+    "importButton": "選擇備份檔並匯入",
+    "importInvalidJson": "無法讀取這個檔案，不是有效的 JSON 格式。",
+    "importInvalidShape": "檔案內容格式不符，未進行任何匯入。",
+    "importConfirm": "這會覆蓋目前所有資料，確定要匯入嗎？",
+    "importSuccess": "已匯入 {trips} 個行程、{expenses} 筆花費紀錄",
+    "languageSection": "語言",
+    "languageZh": "繁體中文",
+    "languageEn": "English"
+  },
+  "category": {
+    "food": "飲食",
+    "accommodation": "住宿",
+    "transport": "交通",
+    "shopping": "購物",
+    "activities": "活動",
+    "entertainment": "娛樂",
+    "other": "其他"
+  },
+  "payment": {
+    "cash": "現金",
+    "credit_card": "信用卡",
+    "debit_card": "金融卡",
+    "other": "其他"
+  }
+}

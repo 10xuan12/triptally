@@ -3,6 +3,7 @@ import type { Trip } from '~/types'
 
 const props = defineProps<{ trip: Trip }>()
 
+const { t } = useI18n()
 const { expenses: allExpenses } = useExpenses()
 
 function formatMonthDay(d: string): string {
@@ -18,8 +19,8 @@ const dateRange = computed(() => {
   const { startDate, endDate } = props.trip
   if (!startDate && !endDate) return null
   if (startDate && endDate) return `${formatMonthDay(startDate)} – ${formatMonthDay(endDate)}`
-  if (startDate) return `${formatMonthDay(startDate)} 起`
-  return `至 ${formatMonthDay(endDate as string)}`
+  if (startDate) return t('home.dateFrom', { date: formatMonthDay(startDate) })
+  return t('home.dateUntil', { date: formatMonthDay(endDate as string) })
 })
 
 // Live totals so the trip list is useful at a glance without opening the
@@ -51,14 +52,14 @@ const isOverBudget = computed(() => hasBudget.value && budgetRemaining.value < 0
     </div>
     <div class="flex items-center justify-between mt-4 pt-4 border-t border-line">
       <p class="font-mono text-xs text-muted">
-        {{ dateRange ?? '日期未設定' }}
+        {{ dateRange ?? t('home.dateNotSet') }}
       </p>
       <p
         v-if="hasBudget"
         class="font-mono text-xs"
         :class="isOverBudget ? 'text-danger font-semibold' : 'text-muted'"
       >
-        {{ isOverBudget ? '超出' : '剩餘' }} {{ formatMoney(Math.abs(budgetRemaining)) }}
+        {{ isOverBudget ? t('home.overBudget') : t('home.remaining') }} {{ formatMoney(Math.abs(budgetRemaining)) }}
       </p>
     </div>
   </NuxtLink>

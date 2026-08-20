@@ -4,6 +4,7 @@ import type { Trip } from '~/types'
 const props = defineProps<{ trip: Trip }>()
 const emit = defineEmits<{ saved: []; cancel: []; deleted: [] }>()
 
+const { t } = useI18n()
 const { updateTrip, deleteTrip } = useTrips()
 
 const name = ref(props.trip.name)
@@ -28,7 +29,7 @@ function handleSave() {
     })
     emit('saved')
   } catch (err) {
-    saveError.value = err instanceof Error ? err.message : '更新失敗，請再試一次'
+    saveError.value = err instanceof Error ? err.message : t('tripForm.updateFailed')
   } finally {
     saving.value = false
   }
@@ -36,7 +37,7 @@ function handleSave() {
 
 function handleDelete() {
   // eslint-disable-next-line no-alert -- deliberate native dialog, mirrors Stage 6's import confirm
-  const confirmed = window.confirm('這會刪除整個行程與其中所有花費紀錄，無法復原，確定要刪除嗎？')
+  const confirmed = window.confirm(t('tripForm.deleteConfirm'))
   if (!confirmed) return
   deleteTrip(props.trip.id) // cascades to every expense under this trip — see useTrips.ts
   emit('deleted')
@@ -46,7 +47,7 @@ function handleDelete() {
 <template>
   <form class="flex flex-col gap-4" @submit.prevent="handleSave">
     <div>
-      <label class="font-body text-xs font-medium text-muted block mb-1">行程名稱</label>
+      <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.name') }}</label>
       <input
         v-model="name"
         type="text"
@@ -61,13 +62,13 @@ function handleDelete() {
          so there's no control to even attempt to edit. -->
     <div class="flex gap-3">
       <div class="flex-1">
-        <p class="font-body text-xs font-medium text-muted block mb-1">旅行幣別</p>
+        <p class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.tripCurrency') }}</p>
         <p class="w-full font-mono border border-line rounded-lg px-3 py-2.5 bg-line/40 text-muted">
           {{ trip.tripCurrency }}
         </p>
       </div>
       <div class="flex-1">
-        <p class="font-body text-xs font-medium text-muted block mb-1">本國幣別</p>
+        <p class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.homeCurrency') }}</p>
         <p class="w-full font-mono border border-line rounded-lg px-3 py-2.5 bg-line/40 text-muted">
           {{ trip.homeCurrency }}
         </p>
@@ -76,7 +77,7 @@ function handleDelete() {
 
     <div class="flex gap-3">
       <div class="flex-1">
-        <label class="font-body text-xs font-medium text-muted block mb-1">開始日期</label>
+        <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.startDate') }}</label>
         <input
           v-model="startDate"
           type="date"
@@ -84,7 +85,7 @@ function handleDelete() {
         >
       </div>
       <div class="flex-1">
-        <label class="font-body text-xs font-medium text-muted block mb-1">結束日期</label>
+        <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.endDate') }}</label>
         <input
           v-model="endDate"
           type="date"
@@ -94,12 +95,12 @@ function handleDelete() {
     </div>
 
     <div>
-      <label class="font-body text-xs font-medium text-muted block mb-1">預算（本國幣別）</label>
+      <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.budget') }}</label>
       <input
         v-model.number="budget"
         type="number"
         min="0"
-        placeholder="選填"
+        :placeholder="$t('tripForm.budgetPlaceholder')"
         class="w-full font-mono border border-line rounded-lg px-3 py-2 bg-card text-ink"
       >
     </div>
@@ -114,14 +115,14 @@ function handleDelete() {
         class="flex-1 font-body text-sm font-medium text-muted border border-line rounded-lg px-4 py-3"
         @click="emit('cancel')"
       >
-        取消
+        {{ $t('common.cancel') }}
       </button>
       <button
         type="submit"
         :disabled="!canSave"
         class="flex-1 font-body text-sm font-semibold text-white bg-pine rounded-lg px-4 py-3 disabled:opacity-40"
       >
-        儲存
+        {{ $t('common.save') }}
       </button>
     </div>
 
@@ -130,7 +131,7 @@ function handleDelete() {
       class="font-body text-xs text-danger text-center mt-2"
       @click="handleDelete"
     >
-      刪除整個行程
+      {{ $t('tripForm.deleteTrip') }}
     </button>
   </form>
 </template>

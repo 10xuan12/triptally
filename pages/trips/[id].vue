@@ -2,10 +2,11 @@
 import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 import type { Expense, ExpenseCategory } from '~/types'
-import { CATEGORY_META, PAYMENT_META, CATEGORY_COLORS } from '~/types/constants'
+import { CATEGORY_COLORS } from '~/types/constants'
 
 ChartJS.register(ArcElement, Tooltip)
 
+const { t } = useI18n()
 const route = useRoute()
 const tripId = computed(() => route.params.id as string)
 
@@ -55,7 +56,7 @@ function closeEditExpense() {
 
 function confirmDeleteExpense(e: Expense) {
   // eslint-disable-next-line no-alert -- deliberate native dialog, mirrors Stage 6's import confirm
-  const confirmed = window.confirm('確定要刪除這筆花費紀錄嗎？')
+  const confirmed = window.confirm(t('expenseEdit.deleteConfirm'))
   if (!confirmed) return
   deleteExpense(e.id)
   expandedExpenseId.value = null
@@ -115,7 +116,7 @@ const categoryEntries = computed(() => {
 // lighter. Colors are the same fixed pine ramp as before (never chart.js's
 // default palette) — a category keeps the same shade across every trip.
 const chartData = computed(() => ({
-  labels: categoryEntries.value.map(([cat]) => CATEGORY_META[cat].label),
+  labels: categoryEntries.value.map(([cat]) => t(`category.${cat}`)),
   datasets: [{
     data: categoryEntries.value.map(([, amt]) => amt),
     backgroundColor: categoryEntries.value.map(([cat]) => CATEGORY_COLORS[cat]),
@@ -193,12 +194,12 @@ onUnmounted(() => {
 <template>
   <div class="px-5 pt-8 pb-28">
     <header class="flex items-center gap-3 mb-6">
-      <NuxtLink to="/" aria-label="返回" class="text-ink text-2xl leading-none">
+      <NuxtLink to="/" :aria-label="$t('common.back')" class="text-ink text-2xl leading-none">
         &larr;
       </NuxtLink>
       <div class="min-w-0 flex-1">
         <p class="font-display text-lg font-semibold text-ink truncate">
-          {{ trip?.name ?? '行程' }}
+          {{ trip?.name ?? $t('dashboard.defaultTripName') }}
         </p>
         <p v-if="trip" class="font-mono text-xs text-muted tracking-wide">
           {{ trip.tripCurrency }} → {{ trip.homeCurrency }}
@@ -210,12 +211,12 @@ onUnmounted(() => {
         class="font-body text-xs text-muted shrink-0"
         @click="showEditTrip = true"
       >
-        編輯
+        {{ $t('common.edit') }}
       </button>
     </header>
 
     <div v-if="!trip" class="ticket p-6 pt-6 text-center">
-      <p class="font-body text-sm text-muted">找不到這趟行程。</p>
+      <p class="font-body text-sm text-muted">{{ $t('dashboard.notFound') }}</p>
     </div>
 
     <template v-else>
@@ -224,7 +225,7 @@ onUnmounted(() => {
            weight being loaded, nothing heavier exists to load), one size
            step up from the rest of the page's figures. -->
       <section class="mb-8">
-        <p class="font-body text-xs font-medium text-muted mb-1">總花費（{{ trip.homeCurrency }}）</p>
+        <p class="font-body text-xs font-medium text-muted mb-1">{{ $t('dashboard.totalSpent', { currency: trip.homeCurrency }) }}</p>
         <p class="font-display text-5xl font-bold text-ink">{{ formatMoney(totalSpent) }}</p>
       </section>
 
@@ -233,7 +234,7 @@ onUnmounted(() => {
            individual bordered boxes. -->
       <section v-if="hasBudget" class="mb-8 pt-8 border-t border-line">
         <div class="flex items-baseline justify-between mb-2">
-          <p class="font-body text-xs font-medium text-muted">預算</p>
+          <p class="font-body text-xs font-medium text-muted">{{ $t('dashboard.budget') }}</p>
           <p class="font-mono text-xs text-muted">
             {{ formatMoney(trip.budget as number) }} {{ trip.homeCurrency }}
           </p>
@@ -245,24 +246,24 @@ onUnmounted(() => {
           />
         </div>
         <p class="font-mono text-xs mt-2" :class="isOverBudget ? 'text-danger font-semibold' : 'text-muted'">
-          {{ isOverBudget ? '已超出' : '剩餘' }}
+          {{ isOverBudget ? $t('home.overBudget') : $t('home.remaining') }}
           {{ formatMoney(Math.abs(budgetRemaining)) }} {{ trip.homeCurrency }}
         </p>
       </section>
 
       <!-- Average spend per day -->
       <section class="mb-8 pt-8 border-t border-line">
-        <p class="font-body text-xs font-medium text-muted mb-1">日均花費</p>
+        <p class="font-body text-xs font-medium text-muted mb-1">{{ $t('dashboard.avgPerDay') }}</p>
         <p class="font-display text-xl font-semibold text-ink">
-          {{ formatMoney(avgPerDay) }} <span class="font-body text-xs font-normal text-muted">{{ trip.homeCurrency }}/天</span>
+          {{ formatMoney(avgPerDay) }} <span class="font-body text-xs font-normal text-muted">{{ trip.homeCurrency }}{{ $t('dashboard.perDay') }}</span>
         </p>
       </section>
 
       <!-- Category breakdown -->
       <section class="mb-8 pt-8 border-t border-line">
-        <p class="font-body text-xs font-medium text-muted mb-4">分類佔比</p>
+        <p class="font-body text-xs font-medium text-muted mb-4">{{ $t('dashboard.categoryBreakdown') }}</p>
         <p v-if="categoryEntries.length === 0" class="font-body text-sm text-muted text-center py-6">
-          尚無花費紀錄
+          {{ $t('dashboard.noExpenses') }}
         </p>
         <template v-else>
           <div class="flex justify-center">
@@ -284,20 +285,18 @@ onUnmounted(() => {
                 :style="{ backgroundColor: CATEGORY_COLORS[cat] }"
                 aria-hidden="true"
               />
-              <span class="font-body text-ink flex-1">{{ CATEGORY_META[cat].label }}</span>
+              <span class="font-body text-ink flex-1">{{ $t(`category.${cat}`) }}</span>
               <span class="font-mono text-muted">{{ formatMoney(amt) }} {{ trip.homeCurrency }}</span>
             </li>
           </ul>
         </template>
       </section>
 
-      <!-- Expense list, grouped by date — date headers bigger/bolder with
-           more spacing, and every figure in this section is one Tailwind
-           step up from where it started, for on-the-go readability. -->
+      <!-- Expense list, grouped by date -->
       <section class="pt-8 border-t border-line">
-        <p class="font-body text-xs font-medium text-muted mb-4">花費紀錄</p>
+        <p class="font-body text-xs font-medium text-muted mb-4">{{ $t('dashboard.expenseList') }}</p>
         <p v-if="groupedByDate.length === 0" class="font-body text-sm text-muted text-center py-6">
-          尚無花費紀錄
+          {{ $t('dashboard.noExpenses') }}
         </p>
         <div v-for="group in groupedByDate" :key="group.date" class="mb-8">
           <div class="flex items-baseline justify-between mb-3">
@@ -315,14 +314,14 @@ onUnmounted(() => {
               >
                 <div class="min-w-0">
                   <p class="font-body text-base text-ink">
-                    {{ CATEGORY_META[e.category].label }}
+                    {{ $t(`category.${e.category}`) }}
                   </p>
                   <p v-if="e.note" class="font-body text-sm text-muted mt-0.5">
                     {{ e.note }}
                   </p>
                   <p class="font-mono text-sm text-muted mt-0.5">
-                    {{ PAYMENT_META[e.paymentMethod].label }}
-                    <span v-if="e.rateIsCached"> · 快取匯率</span>
+                    {{ $t(`payment.${e.paymentMethod}`) }}
+                    <span v-if="e.rateIsCached">{{ $t('dashboard.cachedRateSuffix') }}</span>
                   </p>
                 </div>
                 <div class="text-right shrink-0">
@@ -342,14 +341,14 @@ onUnmounted(() => {
                   class="flex-1 font-body text-xs font-medium text-ink border border-line rounded-lg py-2"
                   @click="openEditExpense(e)"
                 >
-                  編輯
+                  {{ $t('common.edit') }}
                 </button>
                 <button
                   type="button"
                   class="flex-1 font-body text-xs font-medium text-danger border border-danger rounded-lg py-2"
                   @click="confirmDeleteExpense(e)"
                 >
-                  刪除
+                  {{ $t('common.delete') }}
                 </button>
               </div>
             </div>
@@ -361,7 +360,7 @@ onUnmounted(() => {
            directly to this trip so it skips the trip-picker step. -->
       <button
         type="button"
-        aria-label="快速記帳"
+        :aria-label="$t('home.quickAdd')"
         class="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-pine text-white
                font-display text-3xl leading-none shadow-lg
                flex items-center justify-center active:scale-95 transition-transform"
@@ -393,10 +392,10 @@ onUnmounted(() => {
           :style="{ maxHeight: sheetMaxHeight }"
         >
           <div class="flex items-center justify-between mb-5">
-            <h2 class="font-display text-xl font-semibold text-ink">編輯行程</h2>
+            <h2 class="font-display text-xl font-semibold text-ink">{{ $t('tripForm.editTitle') }}</h2>
             <button
               type="button"
-              aria-label="關閉"
+              :aria-label="$t('common.close')"
               class="text-muted text-2xl leading-none"
               @click="showEditTrip = false"
             >

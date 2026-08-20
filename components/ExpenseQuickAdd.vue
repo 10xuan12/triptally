@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Trip, ExpenseCategory, PaymentMethod } from '~/types'
-import { CATEGORY_META, PAYMENT_META } from '~/types/constants'
+import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from '~/types/constants'
 import { getRate } from '~/services/exchangeRateService'
 
 // The core interaction of the whole app: amount → category → payment →
@@ -11,6 +11,7 @@ import { getRate } from '~/services/exchangeRateService'
 const props = defineProps<{ trips: Trip[] }>()
 const emit = defineEmits<{ close: [] }>()
 
+const { t, locale } = useI18n()
 const { addExpense } = useExpenses()
 
 function todayISO(): string {
@@ -66,7 +67,7 @@ async function loadRate(trip: Trip) {
     // disabled with a clear reason. Everyday offline use is unaffected:
     // once any cache exists, getRate() already falls back to it and
     // never reaches this branch.
-    rateError.value = err instanceof Error ? err.message : '無法取得匯率，請檢查網路連線'
+    rateError.value = err instanceof Error ? err.message : t('quickAdd.rateError')
   }
 }
 
@@ -88,7 +89,7 @@ function formatNumber(n: number): string {
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' })
 }
 
 const canSave = computed(() =>
@@ -132,7 +133,7 @@ async function handleSave() {
       note: note.value.trim() || undefined,
       rateIsCached: isHome ? false : rateInfo.value!.isCached
     })
-    savedMessage.value = '已儲存'
+    savedMessage.value = t('quickAdd.saved')
     resetForNextExpense()
     setTimeout(() => { savedMessage.value = '' }, 1500)
     await nextTick()
@@ -140,7 +141,7 @@ async function handleSave() {
   } catch (err) {
     // Same principle as TripCreateForm.vue: a save that silently does
     // nothing is indistinguishable from a frozen button — surface it.
-    saveError.value = err instanceof Error ? err.message : '儲存失敗，請再試一次'
+    saveError.value = err instanceof Error ? err.message : t('quickAdd.saveFailed')
   } finally {
     saving.value = false
   }
@@ -181,22 +182,22 @@ onUnmounted(() => {
 <template>
   <div class="fixed inset-x-0 z-30 bg-paper flex flex-col" :style="viewportStyle">
     <header class="flex items-center justify-between px-5 pt-6 pb-4 shrink-0">
-      <button type="button" aria-label="關閉" class="text-muted text-2xl leading-none" @click="handleClose">&times;</button>
+      <button type="button" :aria-label="$t('common.close')" class="text-muted text-2xl leading-none" @click="handleClose">&times;</button>
       <p v-if="selectedTrip" class="font-mono text-xs text-muted uppercase tracking-widest">{{ selectedTrip.name }}</p>
       <span class="w-6" aria-hidden="true" />
     </header>
     <div v-if="!selectedTrip" class="px-5 flex-1 flex flex-col gap-3 overflow-y-auto min-h-0">
-      <p class="font-body text-sm text-muted mb-1">選擇要記帳的行程</p>
+      <p class="font-body text-sm text-muted mb-1">{{ $t('quickAdd.selectTrip') }}</p>
       <button v-for="trip in trips" :key="trip.id" type="button" class="ticket p-4 pt-4 text-left" @click="selectedTripId = trip.id">
         <p class="font-display text-base font-semibold text-ink">{{ trip.name }}</p>
         <p class="font-mono text-xs text-muted mt-1">{{ trip.tripCurrency }} → {{ trip.homeCurrency }}</p>
       </button>
-      <p v-if="trips.length === 0" class="font-body text-sm text-muted">尚未建立行程。</p>
+      <p v-if="trips.length === 0" class="font-body text-sm text-muted">{{ $t('quickAdd.noTrips') }}</p>
     </div>
     <form v-else class="px-5 flex-1 flex flex-col gap-4 pb-6 overflow-y-auto min-h-0" @submit.prevent="handleSave">
       <div>
         <div class="flex items-center justify-between mb-2">
-          <label class="font-body text-xs font-medium text-muted">金額</label>
+          <label class="font-body text-xs font-medium text-muted">{{ $t('quickAdd.amount') }}</label>
           <div class="flex gap-1.5">
             <button type="button" class="font-mono text-xs rounded-lg px-2.5 py-1 border" :class="amountCurrencyMode === 'trip' ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="amountCurrencyMode = 'trip'">{{ selectedTrip.tripCurrency }}</button>
             <button type="button" class="font-mono text-xs rounded-lg px-2.5 py-1 border" :class="amountCurrencyMode === 'home' ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="amountCurrencyMode = 'home'">{{ selectedTrip.homeCurrency }}</button>
@@ -207,32 +208,32 @@ onUnmounted(() => {
           <template v-if="amountValue > 0 && rateInfo">{{ selectedTrip.tripCurrency }} {{ formatNumber(amountValue) }} ≈ {{ selectedTrip.homeCurrency }} {{ formatNumber(previewHomeAmount) }}</template>
         </p>
         <p v-if="amountCurrencyMode === 'trip' && rateError" class="font-body text-xs text-danger mt-1">{{ rateError }}</p>
-        <p v-else-if="amountCurrencyMode === 'trip' && rateInfo?.isCached" class="font-mono text-xs text-muted mt-1">使用快取匯率 · {{ formatTime(rateInfo.fetchedAt) }}</p>
+        <p v-else-if="amountCurrencyMode === 'trip' && rateInfo?.isCached" class="font-mono text-xs text-muted mt-1">{{ $t('quickAdd.cachedRate') }} · {{ formatTime(rateInfo.fetchedAt) }}</p>
       </div>
       <div>
-        <p class="font-body text-xs font-medium text-muted mb-2">分類</p>
+        <p class="font-body text-xs font-medium text-muted mb-2">{{ $t('quickAdd.category') }}</p>
         <div class="flex flex-wrap gap-2">
-          <button v-for="(meta, key) in CATEGORY_META" :key="key" type="button" class="font-body text-sm rounded-lg px-3 py-1.5 border" :class="category === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="category = key as ExpenseCategory">{{ meta.label }}</button>
+          <button v-for="key in EXPENSE_CATEGORIES" :key="key" type="button" class="font-body text-sm rounded-lg px-3 py-1.5 border" :class="category === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="category = key">{{ $t(`category.${key}`) }}</button>
         </div>
       </div>
       <div>
-        <p class="font-body text-xs font-medium text-muted mb-2">付款方式</p>
+        <p class="font-body text-xs font-medium text-muted mb-2">{{ $t('quickAdd.paymentMethod') }}</p>
         <div class="flex flex-wrap gap-2">
-          <button v-for="(meta, key) in PAYMENT_META" :key="key" type="button" class="font-body text-sm rounded-lg px-3 py-1.5 border" :class="paymentMethod === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="paymentMethod = key as PaymentMethod">{{ meta.label }}</button>
+          <button v-for="key in PAYMENT_METHODS" :key="key" type="button" class="font-body text-sm rounded-lg px-3 py-1.5 border" :class="paymentMethod === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="paymentMethod = key">{{ $t(`payment.${key}`) }}</button>
         </div>
       </div>
       <div>
-        <label class="font-body text-xs font-medium text-muted block mb-2">日期</label>
+        <label class="font-body text-xs font-medium text-muted block mb-2">{{ $t('quickAdd.date') }}</label>
         <input v-model="date" type="date" class="w-full font-mono border border-line rounded-lg px-3 py-2 bg-card text-ink">
       </div>
       <div>
-        <button v-if="!showNoteInput" type="button" class="font-body text-xs text-pine" @click="showNoteInput = true">+ 加備註</button>
-        <input v-else v-model="note" type="text" placeholder="備註（選填），例如：河粉" class="w-full font-body border border-line rounded-lg px-3 py-2 bg-card text-ink">
+        <button v-if="!showNoteInput" type="button" class="font-body text-xs text-pine" @click="showNoteInput = true">{{ $t('quickAdd.addNote') }}</button>
+        <input v-else v-model="note" type="text" :placeholder="$t('quickAdd.notePlaceholder')" class="w-full font-body border border-line rounded-lg px-3 py-2 bg-card text-ink">
       </div>
       <p v-if="savedMessage" class="font-body text-xs text-pine text-center" role="status">{{ savedMessage }}</p>
       <p v-if="saveError" class="font-body text-xs text-danger text-center" role="status">{{ saveError }}</p>
       <div class="mt-auto pt-2 shrink-0">
-        <button type="submit" :disabled="!canSave" class="w-full font-body text-base font-semibold text-white bg-pine rounded-lg py-4 disabled:opacity-40 active:scale-[0.98] transition-transform">儲存</button>
+        <button type="submit" :disabled="!canSave" class="w-full font-body text-base font-semibold text-white bg-pine rounded-lg py-4 disabled:opacity-40 active:scale-[0.98] transition-transform">{{ $t('common.save') }}</button>
       </div>
     </form>
   </div>

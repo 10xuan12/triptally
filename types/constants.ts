@@ -1,25 +1,18 @@
 import type { ExpenseCategory, PaymentMethod } from './index'
 
-// Plain text labels only — no emoji/icon field. "精簡現代工具" direction
-// drops the icon-per-category treatment; category/payment chips carry
-// identity through a pine tint background instead (see components using
-// these maps).
-export const CATEGORY_META: Record<ExpenseCategory, { label: string }> = {
-  food: { label: '飲食' },
-  accommodation: { label: '住宿' },
-  transport: { label: '交通' },
-  shopping: { label: '購物' },
-  activities: { label: '活動' },
-  entertainment: { label: '娛樂' },
-  other: { label: '其他' }
-}
+// Fixed key lists, in display order — used both to iterate all
+// categories/payment methods (e.g. the chip pickers) and as the i18n
+// lookup key (`t('category.' + key)`, `t('payment.' + key)`). Labels
+// themselves live in i18n/locales/*.json, not here — there's no
+// English/Chinese label field on these anymore since the same key needs
+// to resolve to whichever language is active.
+export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
+  'food', 'accommodation', 'transport', 'shopping', 'activities', 'entertainment', 'other'
+]
 
-export const PAYMENT_META: Record<PaymentMethod, { label: string }> = {
-  cash: { label: '現金' },
-  credit_card: { label: '信用卡' },
-  debit_card: { label: '金融卡' },
-  other: { label: '其他' }
-}
+export const PAYMENT_METHODS: PaymentMethod[] = [
+  'cash', 'credit_card', 'debit_card', 'other'
+]
 
 // Category-chart colors — a monochrome tint/shade ramp of `pine` (same hue
 // family as tailwind.config.ts's pine token), light to dark. Deliberately

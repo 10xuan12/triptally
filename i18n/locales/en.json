@@ -1,0 +1,121 @@
+{
+  "app": {
+    "title": "TripTally",
+    "tagline": "Spend once, log once.",
+    "brand": "Selina AI Studio"
+  },
+  "common": {
+    "back": "Back",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "home": {
+    "yourTrips": "Your Trips",
+    "addTrip": "+ New Trip",
+    "noTrips": "No trips yet",
+    "noTripsHint": "Create your first trip to start tracking expenses",
+    "createTrip": "+ Create Trip",
+    "quickAdd": "Quick add expense",
+    "dateNotSet": "No dates set",
+    "dateFrom": "From {date}",
+    "dateUntil": "Until {date}",
+    "remaining": "Remaining",
+    "overBudget": "Over by",
+    "settingsLink": "Settings"
+  },
+  "tripForm": {
+    "createTitle": "Create Trip",
+    "editTitle": "Edit Trip",
+    "name": "Trip Name",
+    "namePlaceholder": "e.g. Bangkok, Thailand",
+    "tripCurrency": "Trip Currency",
+    "homeCurrency": "Home Currency",
+    "tripCurrencyPlaceholder": "e.g. THB",
+    "homeCurrencyPlaceholder": "e.g. TWD",
+    "moreOptions": "More options",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "budget": "Budget (home currency)",
+    "budgetPlaceholder": "Optional",
+    "createFailed": "Failed to create trip, please try again",
+    "updateFailed": "Failed to update, please try again",
+    "deleteTrip": "Delete this trip",
+    "deleteConfirm": "This will delete the entire trip and all its expenses. This cannot be undone. Are you sure?"
+  },
+  "currencySelect": {
+    "placeholder": "Select currency",
+    "searchPlaceholder": "Search currency code"
+  },
+  "quickAdd": {
+    "selectTrip": "Select a trip to log this expense to",
+    "noTrips": "No trips created yet.",
+    "amount": "Amount",
+    "cachedRate": "Using cached rate",
+    "rateError": "Couldn't fetch exchange rate — check your connection",
+    "category": "Category",
+    "paymentMethod": "Payment Method",
+    "date": "Date",
+    "addNote": "+ Add note",
+    "notePlaceholder": "Note (optional), e.g. Pad Thai",
+    "saved": "Saved",
+    "saveFailed": "Failed to save, please try again"
+  },
+  "expenseEdit": {
+    "title": "Edit Expense",
+    "note": "Note",
+    "notePlaceholder": "Note (optional)",
+    "loadingRate": "Fetching exchange rate…",
+    "frozenRate": "Uses the rate frozen when this was created — won't be recalculated",
+    "freshRate": "Fetched the current rate and froze it — future edits won't change it",
+    "deleteConfirm": "Delete this expense?"
+  },
+  "dashboard": {
+    "notFound": "This trip couldn't be found.",
+    "defaultTripName": "Trip",
+    "totalSpent": "Total Spent ({currency})",
+    "budget": "Budget",
+    "avgPerDay": "Avg. per Day",
+    "perDay": "/day",
+    "categoryBreakdown": "By Category",
+    "noExpenses": "No expenses yet",
+    "expenseList": "Expenses",
+    "cachedRateSuffix": " · cached rate"
+  },
+  "settings": {
+    "title": "Settings",
+    "backupSection": "Backup & Restore",
+    "backupDescription": "All data lives only in this device's browser — there's no cloud sync. Export a backup regularly, especially before switching devices or clearing browser data.",
+    "exportTitle": "Export Backup",
+    "exportSummary": "{trips} trips · {expenses} expenses",
+    "exportButton": "Download Backup (JSON)",
+    "exportSuccess": "Exported {trips} trips, {expenses} expenses",
+    "importTitle": "Import Backup",
+    "importDescription": "This will overwrite all trips and expenses on this device",
+    "importButton": "Choose Backup File to Import",
+    "importInvalidJson": "Couldn't read this file — it's not valid JSON.",
+    "importInvalidShape": "The file's contents don't match the expected format. Nothing was imported.",
+    "importConfirm": "This will overwrite all current data. Are you sure you want to import?",
+    "importSuccess": "Imported {trips} trips, {expenses} expenses",
+    "languageSection": "Language",
+    "languageZh": "繁體中文",
+    "languageEn": "English"
+  },
+  "category": {
+    "food": "Food",
+    "accommodation": "Lodging",
+    "transport": "Transport",
+    "shopping": "Shopping",
+    "activities": "Activities",
+    "entertainment": "Entertainment",
+    "other": "Other"
+  },
+  "payment": {
+    "cash": "Cash",
+    "credit_card": "Credit Card",
+    "debit_card": "Debit Card",
+    "other": "Other"
+  }
+}

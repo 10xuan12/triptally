@@ -11,14 +11,31 @@ export default defineNuxtConfig({
   // Confirmed hitting this in ExpenseQuickAdd.vue during mobile testing.
   ssr: false,
 
-  modules: ['@nuxtjs/tailwindcss'],
+  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/i18n'],
+
+  // zh-TW is the default (this is a Traditional-Chinese-first product);
+  // en is the only other locale offered. `strategy: 'no_prefix'` keeps
+  // routes as plain `/`, `/trips/:id`, `/settings` — this is SSR:false with
+  // no SEO need, so there's no reason for locale-prefixed URLs. Language
+  // persistence is handled by hand in plugins/i18n-persist.client.ts
+  // (localStorage, per product decision) rather than this module's default
+  // cookie-based detection, so browser-language auto-detection is off too.
+  i18n: {
+    locales: [
+      { code: 'zh-TW', language: 'zh-TW', name: '繁體中文', file: 'zh-TW.json' },
+      { code: 'en', language: 'en-US', name: 'English', file: 'en.json' }
+    ],
+    langDir: 'locales/',
+    defaultLocale: 'zh-TW',
+    strategy: 'no_prefix',
+    detectBrowserLanguage: false
+  },
 
   css: ['~/assets/css/main.css'],
 
   app: {
     head: {
       title: 'TripTally',
-      htmlAttrs: { lang: 'zh-Hant' },
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content' },
         { name: 'theme-color', content: '#141816' },

@@ -68,7 +68,7 @@ function onBlur() {
       class="w-full font-mono text-left border border-line rounded-lg px-3 py-2.5 bg-card text-ink"
       @click="openSelect"
     >
-      {{ modelValue || placeholder || '選擇幣別' }}
+      {{ modelValue || placeholder || $t('currencySelect.placeholder') }}
     </button>
 
     <input
@@ -78,7 +78,7 @@ function onBlur() {
       type="text"
       inputmode="text"
       autocapitalize="characters"
-      :placeholder="modelValue || placeholder || '搜尋幣別代碼'"
+      :placeholder="modelValue || placeholder || $t('currencySelect.searchPlaceholder')"
       class="w-full font-mono border border-pine rounded-lg px-3 py-2.5 bg-card text-ink outline-none"
       @keydown.enter.prevent="commitQuery"
       @blur="onBlur"

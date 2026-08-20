@@ -58,40 +58,40 @@ function handleQuickAddClick() {
     <!-- Header -->
     <header class="mb-8 flex items-start justify-between">
       <div>
-        <p class="font-mono text-xs tracking-widest text-muted uppercase">Selina AI Studio</p>
-        <h1 class="font-display text-3xl font-semibold text-ink mt-1">TripTally</h1>
-        <p class="font-body text-sm text-muted mt-1">花一次錢，記一次帳。</p>
+        <p class="font-mono text-xs tracking-widest text-muted uppercase">{{ $t('app.brand') }}</p>
+        <h1 class="font-display text-3xl font-semibold text-ink mt-1">{{ $t('app.title') }}</h1>
+        <p class="font-body text-sm text-muted mt-1">{{ $t('app.tagline') }}</p>
       </div>
-      <NuxtLink to="/settings" aria-label="設定" class="font-body text-xs text-muted mt-2">
-        設定
+      <NuxtLink to="/settings" :aria-label="$t('settings.title')" class="font-body text-xs text-muted mt-2">
+        {{ $t('home.settingsLink') }}
       </NuxtLink>
     </header>
 
     <!-- Trip list -->
     <section>
       <div class="flex items-center justify-between mb-3">
-        <h2 class="font-body text-sm font-medium text-muted">你的旅行</h2>
+        <h2 class="font-body text-sm font-medium text-muted">{{ $t('home.yourTrips') }}</h2>
         <button
           v-if="trips.length"
           type="button"
           class="font-body text-xs font-medium text-pine border border-pine rounded-lg px-3 py-1.5"
           @click="showCreate = true"
         >
-          + 新增行程
+          {{ $t('home.addTrip') }}
         </button>
       </div>
 
       <div v-if="trips.length === 0" class="ticket p-6 pt-6 flex flex-col items-center text-center gap-2">
-        <p class="font-body text-sm text-ink font-medium">還沒有行程</p>
+        <p class="font-body text-sm text-ink font-medium">{{ $t('home.noTrips') }}</p>
         <p class="font-body text-xs text-muted">
-          建立第一趟旅行，開始記錄花費
+          {{ $t('home.noTripsHint') }}
         </p>
         <button
           type="button"
           class="mt-3 font-body text-sm font-medium text-pine border border-pine rounded-lg px-4 py-2"
           @click="showCreate = true"
         >
-          + 建立行程
+          {{ $t('home.createTrip') }}
         </button>
       </div>
 
@@ -105,7 +105,7 @@ function handleQuickAddClick() {
          to find the primary action. -->
     <button
       type="button"
-      aria-label="快速記帳"
+      :aria-label="$t('home.quickAdd')"
       class="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-pine text-white
              font-display text-3xl leading-none shadow-lg
              flex items-center justify-center active:scale-95 transition-transform"
@@ -128,10 +128,10 @@ function handleQuickAddClick() {
         :style="{ maxHeight: sheetMaxHeight }"
       >
         <div class="flex items-center justify-between mb-5">
-          <h2 class="font-display text-xl font-semibold text-ink">建立行程</h2>
+          <h2 class="font-display text-xl font-semibold text-ink">{{ $t('tripForm.createTitle') }}</h2>
           <button
             type="button"
-            aria-label="關閉"
+            :aria-label="$t('common.close')"
             class="text-muted text-2xl leading-none"
             @click="showCreate = false"
           >

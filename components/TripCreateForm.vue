@@ -6,6 +6,7 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
+const { t } = useI18n()
 const { createTrip } = useTrips()
 
 const name = ref('')
@@ -64,7 +65,7 @@ function handleSave() {
     // button — surface it instead of letting it vanish into the console
     // (which real users, especially on a phone with no devtools attached,
     // will never see).
-    saveError.value = err instanceof Error ? err.message : '建立行程失敗，請再試一次'
+    saveError.value = err instanceof Error ? err.message : t('tripForm.createFailed')
   } finally {
     saving.value = false
   }
@@ -74,38 +75,38 @@ function handleSave() {
 <template>
   <form class="flex flex-col gap-4" @submit.prevent="handleSave">
     <div>
-      <label class="font-body text-xs font-medium text-muted block mb-1">行程名稱</label>
+      <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.name') }}</label>
       <input
         v-model="name"
         type="text"
         autofocus
-        placeholder="例如：泰國曼谷"
+        :placeholder="$t('tripForm.namePlaceholder')"
         class="w-full font-body border border-line rounded-lg px-3 py-2.5 bg-card text-ink outline-none focus:border-pine"
       >
     </div>
 
     <CurrencySelect
       v-model="tripCurrency"
-      label="旅行幣別"
-      placeholder="例如 THB"
+      :label="$t('tripForm.tripCurrency')"
+      :placeholder="$t('tripForm.tripCurrencyPlaceholder')"
       :options="currencyCodes"
     />
 
     <CurrencySelect
       v-model="homeCurrency"
-      label="本國幣別"
-      placeholder="例如 TWD"
+      :label="$t('tripForm.homeCurrency')"
+      :placeholder="$t('tripForm.homeCurrencyPlaceholder')"
       :options="currencyCodes"
     />
 
     <details>
       <summary class="font-body text-sm text-pine cursor-pointer select-none">
-        更多選項
+        {{ $t('tripForm.moreOptions') }}
       </summary>
       <div class="mt-3 flex flex-col gap-3">
         <div class="flex gap-3">
           <div class="flex-1">
-            <label class="font-body text-xs font-medium text-muted block mb-1">開始日期</label>
+            <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.startDate') }}</label>
             <input
               v-model="startDate"
               type="date"
@@ -113,7 +114,7 @@ function handleSave() {
             >
           </div>
           <div class="flex-1">
-            <label class="font-body text-xs font-medium text-muted block mb-1">結束日期</label>
+            <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.endDate') }}</label>
             <input
               v-model="endDate"
               type="date"
@@ -122,12 +123,12 @@ function handleSave() {
           </div>
         </div>
         <div>
-          <label class="font-body text-xs font-medium text-muted block mb-1">預算（本國幣別）</label>
+          <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.budget') }}</label>
           <input
             v-model.number="budget"
             type="number"
             min="0"
-            placeholder="選填"
+            :placeholder="$t('tripForm.budgetPlaceholder')"
             class="w-full font-mono border border-line rounded-lg px-3 py-2 bg-card text-ink"
           >
         </div>
@@ -144,14 +145,14 @@ function handleSave() {
         class="flex-1 font-body text-sm font-medium text-muted border border-line rounded-lg px-4 py-3"
         @click="emit('cancel')"
       >
-        取消
+        {{ $t('common.cancel') }}
       </button>
       <button
         type="submit"
         :disabled="!canSave"
         class="flex-1 font-body text-sm font-semibold text-white bg-pine rounded-lg px-4 py-3 disabled:opacity-40"
       >
-        建立行程
+        {{ $t('tripForm.createTitle') }}
       </button>
     </div>
   </form>

@@ -1,4 +1,5 @@
 import type { Trip, Expense, ExpenseCategory, PaymentMethod } from '~/types'
+import { EXPENSE_CATEGORIES, PAYMENT_METHODS } from '~/types/constants'
 
 // Stage 6 backup file shape. Kept intentionally small and flat — this is a
 // local export/import, not an API contract that needs to evolve gracefully,
@@ -9,11 +10,6 @@ export interface BackupPayload {
   trips: Trip[]
   expenses: Expense[]
 }
-
-const EXPENSE_CATEGORIES: ExpenseCategory[] = [
-  'food', 'accommodation', 'transport', 'shopping', 'activities', 'entertainment', 'other'
-]
-const PAYMENT_METHODS: PaymentMethod[] = ['cash', 'credit_card', 'debit_card', 'other']
 
 function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null && !Array.isArray(x)
