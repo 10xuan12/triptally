@@ -1,16 +1,10 @@
 <script setup lang="ts">
-import {
-  Chart as ChartJS,
-  BarElement,
-  CategoryScale,
-  LinearScale,
-  Tooltip
-} from 'chart.js'
-import { Bar } from 'vue-chartjs'
+import { Chart as ChartJS, ArcElement, Tooltip } from 'chart.js'
+import { Doughnut } from 'vue-chartjs'
 import type { Expense, ExpenseCategory } from '~/types'
 import { CATEGORY_META, PAYMENT_META, CATEGORY_COLORS } from '~/types/constants'
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip)
+ChartJS.register(ArcElement, Tooltip)
 
 const route = useRoute()
 const tripId = computed(() => route.params.id as string)
@@ -115,30 +109,31 @@ const categoryEntries = computed(() => {
     .sort((a, b) => b[1] - a[1])
 })
 
+// Doughnut over a plain pie — on a narrow mobile viewport a ring's arc
+// lengths are easier to compare at a glance than a pie's radii meeting at
+// a shared center, and the open middle keeps the whole section visually
+// lighter. Colors are the same fixed pine ramp as before (never chart.js's
+// default palette) — a category keeps the same shade across every trip.
 const chartData = computed(() => ({
   labels: categoryEntries.value.map(([cat]) => CATEGORY_META[cat].label),
   datasets: [{
     data: categoryEntries.value.map(([, amt]) => amt),
-    // Fixed per-category shade (not reassigned by rank) so a category
-    // keeps the same color across every trip and every visit.
     backgroundColor: categoryEntries.value.map(([cat]) => CATEGORY_COLORS[cat]),
-    borderRadius: 4,
-    borderSkipped: 'start' as const, // rounded at the data end, square at the baseline
-    barThickness: 20,
-    categoryPercentage: 0.7,
-    barPercentage: 0.9
+    borderColor: '#FAFAF9', // paper — visible gap between slices
+    borderWidth: 2,
+    hoverOffset: 4
   }]
 }))
 
-const chartHeight = computed(() => Math.max(120, categoryEntries.value.length * 44))
-
 const chartOptions = {
-  indexAxis: 'y' as const,
   responsive: true,
   maintainAspectRatio: false,
-  layout: { padding: { right: 12 } },
+  cutout: '60%',
   plugins: {
-    legend: { display: false }, // every bar is already direct-labeled on the axis
+    // Built-in legend is disabled in favor of the custom text legend below
+    // the chart — same swatch colors, but with amounts and layout that
+    // match the rest of the page instead of chart.js's own legend styling.
+    legend: { display: false },
     tooltip: {
       backgroundColor: '#141816',
       titleFont: { family: '"IBM Plex Sans"', size: 12 },
@@ -148,28 +143,8 @@ const chartOptions = {
       displayColors: false,
       callbacks: {
         title: () => '',
-        label: (ctx: { label: string; parsed: { x: number } }) =>
-          `${ctx.label}　NT$ ${formatMoney(ctx.parsed.x)}`
-      }
-    }
-  },
-  scales: {
-    x: {
-      beginAtZero: true,
-      grid: { color: '#E5E7E3' }, // hairline, one step off the paper surface
-      border: { display: false },
-      ticks: {
-        font: { family: '"IBM Plex Mono"', size: 10 },
-        color: '#8A8F89',
-        callback: (v: number | string) => formatMoney(Number(v))
-      }
-    },
-    y: {
-      grid: { display: false },
-      border: { display: false },
-      ticks: {
-        font: { family: '"IBM Plex Sans"', size: 12 },
-        color: '#141816'
+        label: (ctx: { label: string; parsed: number }) =>
+          `${ctx.label}　NT$ ${formatMoney(ctx.parsed)}`
       }
     }
   }
@@ -289,9 +264,31 @@ onUnmounted(() => {
         <p v-if="categoryEntries.length === 0" class="font-body text-sm text-muted text-center py-6">
           尚無花費紀錄
         </p>
-        <div v-else :style="{ height: chartHeight + 'px' }">
-          <Bar :data="chartData" :options="chartOptions" />
-        </div>
+        <template v-else>
+          <div class="flex justify-center">
+            <div style="width: 220px; height: 220px;">
+              <Doughnut :data="chartData" :options="chartOptions" />
+            </div>
+          </div>
+          <!-- Custom text legend — color swatch + category name + amount,
+               since chart.js's own legend is disabled above in favor of
+               this layout, which matches the rest of the page. -->
+          <ul class="flex flex-col gap-2 mt-5">
+            <li
+              v-for="[cat, amt] in categoryEntries"
+              :key="cat"
+              class="flex items-center gap-2.5 text-sm"
+            >
+              <span
+                class="w-2.5 h-2.5 rounded-full shrink-0"
+                :style="{ backgroundColor: CATEGORY_COLORS[cat] }"
+                aria-hidden="true"
+              />
+              <span class="font-body text-ink flex-1">{{ CATEGORY_META[cat].label }}</span>
+              <span class="font-mono text-muted">{{ formatMoney(amt) }} {{ trip.homeCurrency }}</span>
+            </li>
+          </ul>
+        </template>
       </section>
 
       <!-- Expense list, grouped by date — date headers bigger/bolder with
