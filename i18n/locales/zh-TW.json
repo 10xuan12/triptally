@@ -10,7 +10,8 @@
     "cancel": "取消",
     "save": "儲存",
     "edit": "編輯",
-    "delete": "刪除"
+    "delete": "刪除",
+    "required": "必填"
   },
   "home": {
     "yourTrips": "你的旅行",
@@ -24,7 +25,11 @@
     "dateUntil": "至 {date}",
     "remaining": "剩餘",
     "overBudget": "超出",
-    "settingsLink": "設定"
+    "settingsLink": "設定",
+    "spentLabel": "已花費",
+    "statusOngoing": "進行中",
+    "statusEnded": "已結束",
+    "statusUpcoming": "未開始"
   },
   "tripForm": {
     "createTitle": "建立行程",
@@ -50,9 +55,11 @@
     "searchPlaceholder": "搜尋幣別代碼"
   },
   "quickAdd": {
+    "title": "新增花費",
     "selectTrip": "選擇要記帳的行程",
     "noTrips": "尚未建立行程。",
     "amount": "金額",
+    "amountIn": "輸入 {currency}",
     "cachedRate": "使用快取匯率",
     "rateError": "無法取得匯率，請檢查網路連線",
     "category": "分類",
@@ -82,7 +89,11 @@
     "categoryBreakdown": "分類佔比",
     "noExpenses": "尚無花費紀錄",
     "expenseList": "花費紀錄",
-    "cachedRateSuffix": " · 快取匯率"
+    "cachedRateSuffix": " · 快取匯率",
+    "spendingAnalysis": "查看花費分析",
+    "dayProgress": "行程進度",
+    "dayOf": "第 {current}/{total} 天",
+    "usedPercent": "已用 {pct}%"
   },
   "settings": {
     "title": "設定",

@@ -10,7 +10,8 @@
     "cancel": "Cancel",
     "save": "Save",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "required": "Required"
   },
   "home": {
     "yourTrips": "Your Trips",
@@ -24,7 +25,11 @@
     "dateUntil": "Until {date}",
     "remaining": "Remaining",
     "overBudget": "Over by",
-    "settingsLink": "Settings"
+    "settingsLink": "Settings",
+    "spentLabel": "Spent",
+    "statusOngoing": "Ongoing",
+    "statusEnded": "Ended",
+    "statusUpcoming": "Upcoming"
   },
   "tripForm": {
     "createTitle": "Create Trip",
@@ -50,9 +55,11 @@
     "searchPlaceholder": "Search currency code"
   },
   "quickAdd": {
+    "title": "New Expense",
     "selectTrip": "Select a trip to log this expense to",
     "noTrips": "No trips created yet.",
     "amount": "Amount",
+    "amountIn": "Enter {currency}",
     "cachedRate": "Using cached rate",
     "rateError": "Couldn't fetch exchange rate — check your connection",
     "category": "Category",
@@ -82,7 +89,11 @@
     "categoryBreakdown": "By Category",
     "noExpenses": "No expenses yet",
     "expenseList": "Expenses",
-    "cachedRateSuffix": " · cached rate"
+    "cachedRateSuffix": " · cached rate",
+    "spendingAnalysis": "View spending breakdown",
+    "dayProgress": "Trip Progress",
+    "dayOf": "Day {current} of {total}",
+    "usedPercent": "{pct}% used"
   },
   "settings": {
     "title": "Settings",

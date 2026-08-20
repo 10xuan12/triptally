@@ -85,6 +85,30 @@ const budgetPercent = computed(() => {
 })
 const isOverBudget = computed(() => hasBudget.value && budgetRemaining.value < 0)
 
+const todayIso = new Date().toISOString().slice(0, 10)
+
+// --- Trip-length day counter ("第 3/5 天") — only meaningful when both
+// dates are set; shared by the header subtitle and the "行程進度" stat
+// tile inside the analysis card. Shown regardless of whether the trip is
+// currently ongoing, past, or upcoming — clamped to the [1, total] range. ---
+const tripDayCount = computed(() => {
+  const { startDate, endDate } = trip.value ?? {}
+  if (!startDate || !endDate) return null
+  const totalDays = Math.max(1, Math.round((new Date(endDate).getTime() - new Date(startDate).getTime()) / 86400000) + 1)
+  const elapsed = Math.round((new Date(todayIso).getTime() - new Date(startDate).getTime()) / 86400000) + 1
+  const current = Math.min(Math.max(elapsed, 1), totalDays)
+  return { current, total: totalDays }
+})
+
+// Header subtitle — "8/12 – 8/16 · 第 3/5 天". Only rendered when both
+// dates are set (same gate as tripDayCount above); a trip with no dates,
+// or only one of the two, shows no subtitle line at all.
+const dateRangeLabel = computed(() => {
+  const { startDate, endDate } = trip.value ?? {}
+  if (!startDate || !endDate) return null
+  return `${formatDateLabel(startDate)} – ${formatDateLabel(endDate)}`
+})
+
 // --- Average spend per day: trip length if start+end are set, otherwise
 // the number of distinct dates that actually have an expense. ---
 const avgPerDay = computed(() => {
@@ -120,7 +144,7 @@ const chartData = computed(() => ({
   datasets: [{
     data: categoryEntries.value.map(([, amt]) => amt),
     backgroundColor: categoryEntries.value.map(([cat]) => CATEGORY_COLORS[cat]),
-    borderColor: '#FAFAF9', // paper — visible gap between slices
+    borderColor: '#FFFFFF', // card — visible gap between slices
     borderWidth: 2,
     hoverOffset: 4
   }]
@@ -129,7 +153,7 @@ const chartData = computed(() => ({
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  cutout: '60%',
+  cutout: '64%',
   plugins: {
     // Built-in legend is disabled in favor of the custom text legend below
     // the chart — same swatch colors, but with amounts and layout that
@@ -137,7 +161,7 @@ const chartOptions = {
     legend: { display: false },
     tooltip: {
       backgroundColor: '#141816',
-      titleFont: { family: '"IBM Plex Sans"', size: 12 },
+      titleFont: { family: '"Public Sans"', size: 12 },
       bodyFont: { family: '"IBM Plex Mono"', size: 13, weight: 'bold' as const },
       padding: 10,
       cornerRadius: 8,
@@ -150,6 +174,12 @@ const chartOptions = {
     }
   }
 }
+
+// --- Progressive disclosure: the category pie + its stat tiles are tucked
+// behind a "查看花費分析" toggle, collapsed by default — this is IA
+// direction 1c from the redesign doc. The expense list stays always
+// visible below it, unlike 1a/1b which show the analysis inline. ---
+const showAnalysis = ref(false)
 
 // --- Expense list, grouped by date, most recent first ---
 const groupedByDate = computed(() => {
@@ -194,21 +224,21 @@ onUnmounted(() => {
 <template>
   <div class="px-5 pt-8 pb-28">
     <header class="flex items-center gap-3 mb-6">
-      <NuxtLink to="/" :aria-label="$t('common.back')" class="text-ink text-2xl leading-none">
+      <NuxtLink to="/" :aria-label="$t('common.back')" class="text-ink text-2xl leading-none shrink-0">
         &larr;
       </NuxtLink>
       <div class="min-w-0 flex-1">
         <p class="font-display text-lg font-semibold text-ink truncate">
           {{ trip?.name ?? $t('dashboard.defaultTripName') }}
         </p>
-        <p v-if="trip" class="font-mono text-xs text-muted tracking-wide">
-          {{ trip.tripCurrency }} → {{ trip.homeCurrency }}
+        <p v-if="dateRangeLabel && tripDayCount" class="font-mono text-xs text-muted tracking-wide">
+          {{ dateRangeLabel }} · {{ $t('dashboard.dayOf', { current: tripDayCount.current, total: tripDayCount.total }) }}
         </p>
       </div>
       <button
         v-if="trip"
         type="button"
-        class="font-body text-xs text-muted shrink-0"
+        class="font-body text-xs font-medium text-muted shrink-0"
         @click="showEditTrip = true"
       >
         {{ $t('common.edit') }}
@@ -220,88 +250,98 @@ onUnmounted(() => {
     </div>
 
     <template v-else>
-      <!-- Total spent — the headline number: heaviest weight the display
-           face offers (700 is Space Grotesk's ceiling — already the
-           weight being loaded, nothing heavier exists to load), one size
-           step up from the rest of the page's figures. -->
-      <section class="mb-8">
-        <p class="font-body text-xs font-medium text-muted mb-1">{{ $t('dashboard.totalSpent', { currency: trip.homeCurrency }) }}</p>
-        <p class="font-display text-5xl font-bold text-ink">{{ formatMoney(totalSpent) }}</p>
-      </section>
-
-      <!-- Budget vs remaining — omitted entirely when no budget is set.
-           Sections below are separated by a hairline + spacing rather than
-           individual bordered boxes. -->
-      <section v-if="hasBudget" class="mb-8 pt-8 border-t border-line">
-        <div class="flex items-baseline justify-between mb-2">
-          <p class="font-body text-xs font-medium text-muted">{{ $t('dashboard.budget') }}</p>
-          <p class="font-mono text-xs text-muted">
-            {{ formatMoney(trip.budget as number) }} {{ trip.homeCurrency }}
+      <!-- Total spent — big number, with "剩 X" inline on the same row
+           (only when a budget is set) and a thin progress bar underneath. -->
+      <section>
+        <p class="font-body text-xs font-medium text-muted uppercase tracking-wide mb-1">
+          {{ $t('dashboard.totalSpent', { currency: trip.homeCurrency }) }}
+        </p>
+        <div class="flex items-end justify-between gap-3">
+          <p class="font-mono text-4xl font-bold text-ink">{{ formatMoney(totalSpent) }}</p>
+          <p v-if="hasBudget" class="font-mono text-[13px] font-semibold pb-1" :class="isOverBudget ? 'text-danger' : 'text-muted'">
+            {{ isOverBudget ? $t('home.overBudget') : $t('home.remaining') }} {{ formatMoney(Math.abs(budgetRemaining)) }}
           </p>
         </div>
-        <div class="h-2 rounded-full bg-pine/10 overflow-hidden">
+        <div v-if="hasBudget" class="h-1.5 rounded-full bg-line overflow-hidden mt-3">
           <div
-            class="h-full rounded-full bg-pine transition-all"
+            class="h-full rounded-full transition-all"
+            :class="isOverBudget ? 'bg-danger' : 'bg-pine'"
             :style="{ width: budgetPercent + '%' }"
           />
         </div>
-        <p class="font-mono text-xs mt-2" :class="isOverBudget ? 'text-danger font-semibold' : 'text-muted'">
-          {{ isOverBudget ? $t('home.overBudget') : $t('home.remaining') }}
-          {{ formatMoney(Math.abs(budgetRemaining)) }} {{ trip.homeCurrency }}
-        </p>
       </section>
 
-      <!-- Average spend per day -->
-      <section class="mb-8 pt-8 border-t border-line">
-        <p class="font-body text-xs font-medium text-muted mb-1">{{ $t('dashboard.avgPerDay') }}</p>
-        <p class="font-display text-xl font-semibold text-ink">
-          {{ formatMoney(avgPerDay) }} <span class="font-body text-xs font-normal text-muted">{{ trip.homeCurrency }}{{ $t('dashboard.perDay') }}</span>
-        </p>
-      </section>
-
-      <!-- Category breakdown -->
-      <section class="mb-8 pt-8 border-t border-line">
-        <p class="font-body text-xs font-medium text-muted mb-4">{{ $t('dashboard.categoryBreakdown') }}</p>
-        <p v-if="categoryEntries.length === 0" class="font-body text-sm text-muted text-center py-6">
-          {{ $t('dashboard.noExpenses') }}
-        </p>
-        <template v-else>
-          <div class="flex justify-center">
-            <div style="width: 220px; height: 220px;">
-              <Doughnut :data="chartData" :options="chartOptions" />
+      <!-- Progressive disclosure: collapsed by default, tap to reveal the
+           日均花費/行程進度 stat tiles + category pie + legend. -->
+      <section class="mt-4 border border-line rounded-xl overflow-hidden">
+        <button
+          type="button"
+          class="w-full flex items-center justify-between px-4 py-3.5 bg-card"
+          @click="showAnalysis = !showAnalysis"
+        >
+          <span class="font-body text-sm font-semibold text-ink">{{ $t('dashboard.spendingAnalysis') }}</span>
+          <span
+            class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent transition-transform"
+            :class="showAnalysis ? 'border-b-[6px] border-b-muted' : 'border-t-[6px] border-t-muted'"
+          />
+        </button>
+        <div v-if="showAnalysis" class="px-4 pb-4 pt-1 border-t border-line bg-card">
+          <div class="flex gap-3 my-3.5">
+            <div class="flex-1 bg-paper border border-line rounded-input p-3">
+              <p class="font-body text-[11px] font-medium text-muted uppercase">{{ $t('dashboard.avgPerDay') }}</p>
+              <p class="font-mono text-base font-bold text-ink mt-0.5">{{ formatMoney(avgPerDay) }} <span class="font-body text-[11px] font-normal text-muted">{{ trip.homeCurrency }}{{ $t('dashboard.perDay') }}</span></p>
+            </div>
+            <div v-if="tripDayCount" class="flex-1 bg-paper border border-line rounded-input p-3">
+              <p class="font-body text-[11px] font-medium text-muted uppercase">{{ $t('dashboard.dayProgress') }}</p>
+              <p class="font-mono text-base font-bold text-ink mt-0.5">{{ $t('dashboard.dayOf', { current: tripDayCount.current, total: tripDayCount.total }) }}</p>
             </div>
           </div>
-          <!-- Custom text legend — color swatch + category name + amount,
-               since chart.js's own legend is disabled above in favor of
-               this layout, which matches the rest of the page. -->
-          <ul class="flex flex-col gap-2 mt-5">
-            <li
-              v-for="[cat, amt] in categoryEntries"
-              :key="cat"
-              class="flex items-center gap-2.5 text-sm"
-            >
-              <span
-                class="w-2.5 h-2.5 rounded-full shrink-0"
-                :style="{ backgroundColor: CATEGORY_COLORS[cat] }"
-                aria-hidden="true"
-              />
-              <span class="font-body text-ink flex-1">{{ $t(`category.${cat}`) }}</span>
-              <span class="font-mono text-muted">{{ formatMoney(amt) }} {{ trip.homeCurrency }}</span>
-            </li>
-          </ul>
-        </template>
+
+          <p v-if="categoryEntries.length === 0" class="font-body text-sm text-muted text-center py-4">
+            {{ $t('dashboard.noExpenses') }}
+          </p>
+          <div v-else class="flex gap-4 items-center">
+            <!-- The center readout is a plain absolutely-positioned overlay,
+                 not a chart.js plugin — same technique as the rest of the
+                 app's hand-styled surfaces, and it stays perfectly centered
+                 regardless of chart re-renders. -->
+            <div class="relative shrink-0" style="width: 96px; height: 96px;">
+              <Doughnut :data="chartData" :options="chartOptions" />
+              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <p class="font-mono text-sm font-bold text-ink leading-tight">{{ formatMoney(totalSpent) }}</p>
+                <p class="font-body text-[10px] text-muted leading-tight">{{ trip.homeCurrency }}</p>
+              </div>
+            </div>
+            <ul class="flex-1 flex flex-col gap-1.5 min-w-0">
+              <li
+                v-for="[cat, amt] in categoryEntries"
+                :key="cat"
+                class="flex items-center gap-2 text-xs"
+              >
+                <span
+                  class="w-2 h-2 rounded-sm shrink-0"
+                  :style="{ backgroundColor: CATEGORY_COLORS[cat] }"
+                  aria-hidden="true"
+                />
+                <span class="font-body text-ink flex-1 truncate">{{ $t(`category.${cat}`) }}</span>
+                <span class="font-mono text-muted shrink-0">{{ formatMoney(amt) }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </section>
 
-      <!-- Expense list, grouped by date -->
-      <section class="pt-8 border-t border-line">
-        <p class="font-body text-xs font-medium text-muted mb-4">{{ $t('dashboard.expenseList') }}</p>
+      <!-- Expense list, grouped by date — always visible, not tucked
+           behind the analysis toggle. -->
+      <section class="mt-7">
+        <p class="font-body text-sm font-semibold text-ink mb-3.5">{{ $t('dashboard.expenseList') }}</p>
         <p v-if="groupedByDate.length === 0" class="font-body text-sm text-muted text-center py-6">
           {{ $t('dashboard.noExpenses') }}
         </p>
-        <div v-for="group in groupedByDate" :key="group.date" class="mb-8">
-          <div class="flex items-baseline justify-between mb-3">
-            <p class="font-mono text-base font-bold text-ink">{{ formatDateLabel(group.date) }}</p>
-            <p class="font-mono text-sm text-muted">{{ formatMoney(group.dayTotal) }} {{ trip.homeCurrency }}</p>
+        <div v-for="group in groupedByDate" :key="group.date" class="mb-6">
+          <div class="bg-line/40 rounded-lg px-3.5 py-2.5 flex items-center justify-between">
+            <p class="font-mono text-[13px] font-bold text-ink">{{ formatDateLabel(group.date) }}</p>
+            <p class="font-mono text-[13px] font-semibold text-ink">{{ formatMoney(group.dayTotal) }} {{ trip.homeCurrency }}</p>
           </div>
           <div class="flex flex-col divide-y divide-line">
             <div v-for="e in group.items" :key="e.id">
@@ -313,13 +353,13 @@ onUnmounted(() => {
                 @click="toggleExpanded(e.id)"
               >
                 <div class="min-w-0">
-                  <p class="font-body text-base text-ink">
+                  <p class="font-body text-base font-medium text-ink">
                     {{ $t(`category.${e.category}`) }}
                   </p>
                   <p v-if="e.note" class="font-body text-sm text-muted mt-0.5">
                     {{ e.note }}
                   </p>
-                  <p class="font-mono text-sm text-muted mt-0.5">
+                  <p class="font-body text-xs text-muted mt-0.5">
                     {{ $t(`payment.${e.paymentMethod}`) }}
                     <span v-if="e.rateIsCached">{{ $t('dashboard.cachedRateSuffix') }}</span>
                   </p>
@@ -338,14 +378,14 @@ onUnmounted(() => {
               <div v-if="expandedExpenseId === e.id" class="flex gap-3 pb-3">
                 <button
                   type="button"
-                  class="flex-1 font-body text-xs font-medium text-ink border border-line rounded-lg py-2"
+                  class="flex-1 font-body text-xs font-semibold text-ink border border-line rounded-input py-2"
                   @click="openEditExpense(e)"
                 >
                   {{ $t('common.edit') }}
                 </button>
                 <button
                   type="button"
-                  class="flex-1 font-body text-xs font-medium text-danger border border-danger rounded-lg py-2"
+                  class="flex-1 font-body text-xs font-semibold text-danger border border-danger rounded-input py-2"
                   @click="confirmDeleteExpense(e)"
                 >
                   {{ $t('common.delete') }}
@@ -361,8 +401,8 @@ onUnmounted(() => {
       <button
         type="button"
         :aria-label="$t('home.quickAdd')"
-        class="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-pine text-white
-               font-display text-3xl leading-none shadow-lg
+        class="fixed bottom-6 right-6 w-14 h-14 rounded-hero bg-pine text-white
+               font-display text-2xl leading-none shadow-[0_8px_20px_-6px_rgba(31,69,54,0.6)]
                flex items-center justify-center active:scale-95 transition-transform"
         @click="showQuickAdd = true"
       >
@@ -380,7 +420,9 @@ onUnmounted(() => {
         @cancel="closeEditExpense"
       />
 
-      <!-- Edit-trip sheet -->
+      <!-- Edit-trip sheet — fixed-height flex column so the field list
+           scrolls internally while Save/Delete stay pinned, matching the
+           create-trip sheet's structure. -->
       <div
         v-if="showEditTrip"
         class="fixed inset-x-0 z-20 flex items-end justify-center bg-ink/40"
@@ -388,10 +430,10 @@ onUnmounted(() => {
         @click.self="showEditTrip = false"
       >
         <div
-          class="w-full max-w-md bg-paper rounded-t-2xl p-5 pb-8 overflow-y-auto"
+          class="w-full max-w-md bg-paper rounded-t-2xl flex flex-col"
           :style="{ maxHeight: sheetMaxHeight }"
         >
-          <div class="flex items-center justify-between mb-5">
+          <div class="flex items-center justify-between px-5 pt-5 pb-4 shrink-0">
             <h2 class="font-display text-xl font-semibold text-ink">{{ $t('tripForm.editTitle') }}</h2>
             <button
               type="button"
@@ -403,6 +445,7 @@ onUnmounted(() => {
             </button>
           </div>
           <TripEditForm
+            class="flex-1 min-h-0 px-5 pb-5"
             :trip="trip"
             @saved="handleTripSaved"
             @cancel="showEditTrip = false"

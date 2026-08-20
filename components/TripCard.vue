@@ -33,34 +33,59 @@ const totalSpent = computed(() =>
 )
 const hasBudget = computed(() => typeof props.trip.budget === 'number' && props.trip.budget > 0)
 const budgetRemaining = computed(() => (props.trip.budget ?? 0) - totalSpent.value)
+const budgetPercent = computed(() => {
+  if (!hasBudget.value) return 0
+  return Math.min(100, (totalSpent.value / (props.trip.budget as number)) * 100)
+})
 const isOverBudget = computed(() => hasBudget.value && budgetRemaining.value < 0)
+
+// Purely presentational — derived from the trip's own dates, no new stored
+// field. "Ended"/"Upcoming" only show once a date has actually passed/not
+// arrived yet; a trip with no dates at all shows no status pill.
+const todayIso = new Date().toISOString().slice(0, 10)
+const tripStatus = computed<'ongoing' | 'ended' | 'upcoming' | null>(() => {
+  const { startDate, endDate } = props.trip
+  if (!startDate && !endDate) return null
+  if (endDate && endDate < todayIso) return 'ended'
+  if (startDate && startDate > todayIso) return 'upcoming'
+  return 'ongoing'
+})
+const statusLabel = computed(() => {
+  if (tripStatus.value === 'ended') return t('home.statusEnded')
+  if (tripStatus.value === 'upcoming') return t('home.statusUpcoming')
+  if (tripStatus.value === 'ongoing') return t('home.statusOngoing')
+  return ''
+})
 </script>
 
 <template>
-  <NuxtLink :to="`/trips/${trip.id}`" class="ticket p-5 pt-5 block">
-    <div class="flex items-start justify-between gap-3">
-      <div class="min-w-0">
-        <p class="font-display text-lg font-semibold text-ink truncate">{{ trip.name }}</p>
-        <p class="font-mono text-xs text-muted mt-1 tracking-wide">
-          {{ trip.tripCurrency }} → {{ trip.homeCurrency }}
+  <NuxtLink :to="`/trips/${trip.id}`" class="bg-card border border-line rounded-card p-4 block">
+    <div class="flex items-baseline justify-between gap-3">
+      <p class="font-display text-[17px] font-semibold text-ink truncate">{{ trip.name }}</p>
+      <p class="font-mono text-xs font-semibold text-muted shrink-0">
+        {{ trip.tripCurrency }} → {{ trip.homeCurrency }}
+      </p>
+    </div>
+    <p class="font-mono text-[13px] text-muted mt-0.5">
+      {{ dateRange ?? t('home.dateNotSet') }}
+    </p>
+
+    <div class="mt-3.5">
+      <p class="font-body text-[11px] font-medium text-muted uppercase tracking-wide">{{ t('home.spentLabel') }}</p>
+      <p class="font-mono text-[26px] font-bold text-ink mt-0.5">{{ formatMoney(totalSpent) }}</p>
+    </div>
+
+    <template v-if="hasBudget">
+      <div class="h-1.5 rounded-full bg-line overflow-hidden mt-3">
+        <div class="h-full rounded-full bg-pine transition-all" :style="{ width: budgetPercent + '%' }" />
+      </div>
+      <div class="flex items-center justify-between mt-2">
+        <p class="font-mono text-[13px] font-medium" :class="isOverBudget ? 'text-danger' : 'text-muted'">
+          {{ isOverBudget ? t('home.overBudget') : t('home.remaining') }} {{ formatMoney(Math.abs(budgetRemaining)) }}
         </p>
+        <p v-if="statusLabel" class="font-body text-xs text-muted">{{ statusLabel }}</p>
       </div>
-      <div class="text-right shrink-0">
-        <p class="font-display text-xl font-bold text-ink">{{ formatMoney(totalSpent) }}</p>
-        <p class="font-mono text-xs text-muted mt-0.5">{{ trip.homeCurrency }}</p>
-      </div>
-    </div>
-    <div class="flex items-center justify-between mt-4 pt-4 border-t border-line">
-      <p class="font-mono text-xs text-muted">
-        {{ dateRange ?? t('home.dateNotSet') }}
-      </p>
-      <p
-        v-if="hasBudget"
-        class="font-mono text-xs"
-        :class="isOverBudget ? 'text-danger font-semibold' : 'text-muted'"
-      >
-        {{ isOverBudget ? t('home.overBudget') : t('home.remaining') }} {{ formatMoney(Math.abs(budgetRemaining)) }}
-      </p>
-    </div>
+    </template>
+    <p v-else-if="statusLabel" class="font-body text-xs text-muted mt-3">{{ statusLabel }}</p>
   </NuxtLink>
 </template>

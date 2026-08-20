@@ -181,59 +181,157 @@ onUnmounted(() => {
 
 <template>
   <div class="fixed inset-x-0 z-30 bg-paper flex flex-col" :style="viewportStyle">
-    <header class="flex items-center justify-between px-5 pt-6 pb-4 shrink-0">
-      <button type="button" :aria-label="$t('common.close')" class="text-muted text-2xl leading-none" @click="handleClose">&times;</button>
-      <p v-if="selectedTrip" class="font-mono text-xs text-muted uppercase tracking-widest">{{ selectedTrip.name }}</p>
-      <span class="w-6" aria-hidden="true" />
+    <header class="flex items-center gap-3 px-5 pt-6 pb-4 shrink-0">
+      <button type="button" :aria-label="$t('common.close')" class="text-muted text-2xl leading-none shrink-0" @click="handleClose">
+        &times;
+      </button>
+      <div v-if="selectedTrip" class="min-w-0">
+        <p class="font-display text-lg font-bold text-ink truncate">{{ $t('quickAdd.title') }}</p>
+        <p class="font-body text-xs text-muted truncate">{{ selectedTrip.name }}</p>
+      </div>
     </header>
+
+    <!-- Step: pick a trip (only shown when there's more than one) -->
     <div v-if="!selectedTrip" class="px-5 flex-1 flex flex-col gap-3 overflow-y-auto min-h-0">
       <p class="font-body text-sm text-muted mb-1">{{ $t('quickAdd.selectTrip') }}</p>
-      <button v-for="trip in trips" :key="trip.id" type="button" class="ticket p-4 pt-4 text-left" @click="selectedTripId = trip.id">
+      <button
+        v-for="trip in trips"
+        :key="trip.id"
+        type="button"
+        class="ticket p-4 pt-4 text-left"
+        @click="selectedTripId = trip.id"
+      >
         <p class="font-display text-base font-semibold text-ink">{{ trip.name }}</p>
         <p class="font-mono text-xs text-muted mt-1">{{ trip.tripCurrency }} → {{ trip.homeCurrency }}</p>
       </button>
       <p v-if="trips.length === 0" class="font-body text-sm text-muted">{{ $t('quickAdd.noTrips') }}</p>
     </div>
+
+    <!-- Step: quick-add form -->
     <form v-else class="px-5 flex-1 flex flex-col gap-4 pb-6 overflow-y-auto min-h-0" @submit.prevent="handleSave">
       <div>
-        <div class="flex items-center justify-between mb-2">
-          <label class="font-body text-xs font-medium text-muted">{{ $t('quickAdd.amount') }}</label>
-          <div class="flex gap-1.5">
-            <button type="button" class="font-mono text-xs rounded-lg px-2.5 py-1 border" :class="amountCurrencyMode === 'trip' ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="amountCurrencyMode = 'trip'">{{ selectedTrip.tripCurrency }}</button>
-            <button type="button" class="font-mono text-xs rounded-lg px-2.5 py-1 border" :class="amountCurrencyMode === 'home' ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="amountCurrencyMode = 'home'">{{ selectedTrip.homeCurrency }}</button>
-          </div>
+        <div class="flex flex-col items-center text-center py-2">
+          <label class="font-body text-xs font-medium text-muted uppercase tracking-wide">
+            {{ $t('quickAdd.amount') }}（{{ amountCurrencyMode === 'trip' ? selectedTrip.tripCurrency : selectedTrip.homeCurrency }}）
+          </label>
+          <input
+            ref="amountInputEl"
+            v-model="amountText"
+            type="text"
+            inputmode="decimal"
+            autofocus
+            placeholder="0"
+            class="w-full font-mono text-center text-5xl font-bold text-ink bg-transparent outline-none mt-1"
+          >
+          <p v-if="amountCurrencyMode === 'trip'" class="font-mono text-sm text-muted mt-1 min-h-[1.25em]">
+            <template v-if="amountValue > 0 && rateInfo">
+              ≈ {{ selectedTrip.homeCurrency }} {{ formatNumber(previewHomeAmount) }}
+            </template>
+          </p>
+          <p v-if="amountCurrencyMode === 'trip' && rateError" class="font-body text-xs text-danger mt-1">{{ rateError }}</p>
+          <p v-else-if="amountCurrencyMode === 'trip' && rateInfo?.isCached" class="font-mono text-xs text-muted mt-1">
+            {{ $t('quickAdd.cachedRate') }} · {{ formatTime(rateInfo.fetchedAt) }}
+          </p>
         </div>
-        <input ref="amountInputEl" v-model="amountText" type="text" inputmode="decimal" autofocus placeholder="0" class="w-full font-display text-5xl font-semibold text-ink bg-transparent outline-none border-b-2 border-line focus:border-pine pb-2">
-        <p v-if="amountCurrencyMode === 'trip'" class="font-mono text-sm text-muted mt-2 min-h-[1.25em]">
-          <template v-if="amountValue > 0 && rateInfo">{{ selectedTrip.tripCurrency }} {{ formatNumber(amountValue) }} ≈ {{ selectedTrip.homeCurrency }} {{ formatNumber(previewHomeAmount) }}</template>
-        </p>
-        <p v-if="amountCurrencyMode === 'trip' && rateError" class="font-body text-xs text-danger mt-1">{{ rateError }}</p>
-        <p v-else-if="amountCurrencyMode === 'trip' && rateInfo?.isCached" class="font-mono text-xs text-muted mt-1">{{ $t('quickAdd.cachedRate') }} · {{ formatTime(rateInfo.fetchedAt) }}</p>
+        <div class="flex border border-line rounded-input overflow-hidden mt-3">
+          <button
+            type="button"
+            class="flex-1 text-center py-2.5 font-body text-sm font-semibold"
+            :class="amountCurrencyMode === 'trip' ? 'bg-pine text-white' : 'bg-card text-ink'"
+            @click="amountCurrencyMode = 'trip'"
+          >
+            {{ $t('quickAdd.amountIn', { currency: selectedTrip.tripCurrency }) }}
+          </button>
+          <button
+            type="button"
+            class="flex-1 text-center py-2.5 font-body text-sm font-semibold"
+            :class="amountCurrencyMode === 'home' ? 'bg-pine text-white' : 'bg-card text-ink'"
+            @click="amountCurrencyMode = 'home'"
+          >
+            {{ $t('quickAdd.amountIn', { currency: selectedTrip.homeCurrency }) }}
+          </button>
+        </div>
       </div>
+
       <div>
-        <p class="font-body text-xs font-medium text-muted mb-2">{{ $t('quickAdd.category') }}</p>
+        <p class="font-body text-[13px] font-semibold text-ink mb-2.5">{{ $t('quickAdd.category') }}</p>
         <div class="flex flex-wrap gap-2">
-          <button v-for="key in EXPENSE_CATEGORIES" :key="key" type="button" class="font-body text-sm rounded-lg px-3 py-1.5 border" :class="category === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="category = key">{{ $t(`category.${key}`) }}</button>
+          <button
+            v-for="key in EXPENSE_CATEGORIES"
+            :key="key"
+            type="button"
+            class="font-body text-sm rounded-lg px-3.5 py-2 border"
+            :class="category === key ? 'bg-pine text-white border-pine font-semibold' : 'bg-card text-ink border-line font-medium'"
+            @click="category = key"
+          >
+            {{ $t(`category.${key}`) }}
+          </button>
         </div>
       </div>
+
       <div>
-        <p class="font-body text-xs font-medium text-muted mb-2">{{ $t('quickAdd.paymentMethod') }}</p>
+        <p class="font-body text-[13px] font-semibold text-ink mb-2.5">{{ $t('quickAdd.paymentMethod') }}</p>
         <div class="flex flex-wrap gap-2">
-          <button v-for="key in PAYMENT_METHODS" :key="key" type="button" class="font-body text-sm rounded-lg px-3 py-1.5 border" :class="paymentMethod === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="paymentMethod = key">{{ $t(`payment.${key}`) }}</button>
+          <button
+            v-for="key in PAYMENT_METHODS"
+            :key="key"
+            type="button"
+            class="flex-1 font-body text-[13px] text-center rounded-lg px-2 py-2.5 border"
+            :class="paymentMethod === key ? 'bg-pine text-white border-pine font-semibold' : 'bg-card text-ink border-line font-medium'"
+            @click="paymentMethod = key"
+          >
+            {{ $t(`payment.${key}`) }}
+          </button>
         </div>
       </div>
+
       <div>
-        <label class="font-body text-xs font-medium text-muted block mb-2">{{ $t('quickAdd.date') }}</label>
-        <input v-model="date" type="date" class="w-full font-mono border border-line rounded-lg px-3 py-2 bg-card text-ink">
+        <label class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('quickAdd.date') }}</label>
+        <input
+          v-model="date"
+          type="date"
+          class="w-full font-mono border border-line rounded-input px-3 py-2.5 bg-card text-ink"
+        >
       </div>
+
+      <!-- Optional note — collapsed to a bare text link by default so it
+           never displaces the save button; expands to a single-line input
+           on demand. Never required: canSave doesn't reference it. -->
       <div>
-        <button v-if="!showNoteInput" type="button" class="font-body text-xs text-pine" @click="showNoteInput = true">{{ $t('quickAdd.addNote') }}</button>
-        <input v-else v-model="note" type="text" :placeholder="$t('quickAdd.notePlaceholder')" class="w-full font-body border border-line rounded-lg px-3 py-2 bg-card text-ink">
+        <button
+          v-if="!showNoteInput"
+          type="button"
+          class="font-body text-xs font-semibold text-pine"
+          @click="showNoteInput = true"
+        >
+          {{ $t('quickAdd.addNote') }}
+        </button>
+        <template v-else>
+          <label class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('expenseEdit.note') }}</label>
+          <input
+            v-model="note"
+            type="text"
+            :placeholder="$t('quickAdd.notePlaceholder')"
+            class="w-full font-body border border-line rounded-input px-3 py-2.5 bg-card text-ink"
+          >
+        </template>
       </div>
-      <p v-if="savedMessage" class="font-body text-xs text-pine text-center" role="status">{{ savedMessage }}</p>
-      <p v-if="saveError" class="font-body text-xs text-danger text-center" role="status">{{ saveError }}</p>
-      <div class="mt-auto pt-2 shrink-0">
-        <button type="submit" :disabled="!canSave" class="w-full font-body text-base font-semibold text-white bg-pine rounded-lg py-4 disabled:opacity-40 active:scale-[0.98] transition-transform">{{ $t('common.save') }}</button>
+
+      <p v-if="savedMessage" class="font-body text-xs text-pine text-center" role="status">
+        {{ savedMessage }}
+      </p>
+      <p v-if="saveError" class="font-body text-xs text-danger text-center" role="status">
+        {{ saveError }}
+      </p>
+
+      <div class="mt-auto pt-4 border-t border-line shrink-0">
+        <button
+          type="submit"
+          :disabled="!canSave"
+          class="w-full font-body text-base font-bold text-white bg-pine rounded-input py-4 disabled:opacity-40 active:scale-[0.98] transition-transform"
+        >
+          {{ $t('common.save') }}
+        </button>
       </div>
     </form>
   </div>

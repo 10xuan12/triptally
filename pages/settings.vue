@@ -102,20 +102,20 @@ async function handleFileChange(event: Event) {
          to localStorage so it's remembered on next launch, independent
          of whatever the browser itself is set to. -->
     <section class="mb-8">
-      <p class="font-body text-xs font-medium text-muted mb-3">{{ $t('settings.languageSection') }}</p>
-      <div class="flex gap-2">
+      <p class="font-body text-xs font-semibold text-muted uppercase tracking-wide mb-2.5">{{ $t('settings.languageSection') }}</p>
+      <div class="flex border border-line rounded-input overflow-hidden">
         <button
           type="button"
-          class="flex-1 font-body text-sm rounded-lg py-2.5 border"
-          :class="locale === 'zh-TW' ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'"
+          class="flex-1 font-body text-sm py-3"
+          :class="locale === 'zh-TW' ? 'bg-pine text-white font-semibold' : 'bg-card text-ink font-medium'"
           @click="selectLocale('zh-TW')"
         >
           {{ $t('settings.languageZh') }}
         </button>
         <button
           type="button"
-          class="flex-1 font-body text-sm rounded-lg py-2.5 border"
-          :class="locale === 'en' ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'"
+          class="flex-1 font-body text-sm py-3"
+          :class="locale === 'en' ? 'bg-pine text-white font-semibold' : 'bg-card text-ink font-medium'"
           @click="selectLocale('en')"
         >
           {{ $t('settings.languageEn') }}
@@ -124,39 +124,29 @@ async function handleFileChange(event: Event) {
     </section>
 
     <section>
-      <p class="font-body text-xs font-medium text-muted mb-1">{{ $t('settings.backupSection') }}</p>
+      <p class="font-body text-xs font-semibold text-muted uppercase tracking-wide mb-2.5">{{ $t('settings.backupSection') }}</p>
       <p class="font-body text-xs text-muted mb-4">
         {{ $t('settings.backupDescription') }}
       </p>
 
-      <div class="ticket p-5 pt-5 mb-4">
-        <p class="font-body text-sm font-medium text-ink mb-1">{{ $t('settings.exportTitle') }}</p>
-        <p class="font-mono text-xs text-muted mb-4">
-          {{ $t('settings.exportSummary', { trips: trips.length, expenses: expenses.length }) }}
-        </p>
+      <div class="bg-card border border-line rounded-xl overflow-hidden">
         <button
           type="button"
-          class="w-full font-body text-sm font-semibold text-white bg-pine rounded-lg py-3"
+          class="w-full flex items-center justify-between gap-3 px-4 py-4 border-b border-line text-left"
           @click="exportBackup"
         >
-          {{ $t('settings.exportButton') }}
+          <span class="font-body text-[15px] font-medium text-ink">{{ $t('settings.exportTitle') }}</span>
+          <span class="font-mono text-xs text-muted shrink-0">
+            {{ $t('settings.exportSummary', { trips: trips.length, expenses: expenses.length }) }}
+          </span>
         </button>
-        <p v-if="exportMessage" class="font-body text-xs text-pine text-center mt-3" role="status">
-          {{ exportMessage }}
-        </p>
-      </div>
-
-      <div class="ticket p-5 pt-5">
-        <p class="font-body text-sm font-medium text-ink mb-1">{{ $t('settings.importTitle') }}</p>
-        <p class="font-mono text-xs text-muted mb-4">
-          {{ $t('settings.importDescription') }}
-        </p>
         <button
           type="button"
-          class="w-full font-body text-sm font-semibold text-ink border border-line rounded-lg py-3"
+          class="w-full flex items-center justify-between gap-3 px-4 py-4 text-left"
           @click="triggerFileSelect"
         >
-          {{ $t('settings.importButton') }}
+          <span class="font-body text-[15px] font-medium text-ink">{{ $t('settings.importTitle') }}</span>
+          <span class="font-body text-base font-semibold text-muted">›</span>
         </button>
         <input
           ref="fileInputEl"
@@ -165,13 +155,16 @@ async function handleFileChange(event: Event) {
           class="hidden"
           @change="handleFileChange"
         >
-        <p v-if="importSuccess" class="font-body text-xs text-pine text-center mt-3" role="status">
-          {{ importSuccess }}
-        </p>
-        <p v-if="importError" class="font-body text-xs text-danger text-center mt-3" role="status">
-          {{ importError }}
-        </p>
       </div>
+      <p v-if="exportMessage" class="font-body text-xs text-pine text-center mt-3" role="status">
+        {{ exportMessage }}
+      </p>
+      <p v-if="importSuccess" class="font-body text-xs text-pine text-center mt-3" role="status">
+        {{ importSuccess }}
+      </p>
+      <p v-if="importError" class="font-body text-xs text-danger text-center mt-3" role="status">
+        {{ importError }}
+      </p>
     </section>
   </div>
 </template>

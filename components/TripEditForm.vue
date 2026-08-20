@@ -45,74 +45,84 @@ function handleDelete() {
 </script>
 
 <template>
-  <form class="flex flex-col gap-4" @submit.prevent="handleSave">
-    <div>
-      <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.name') }}</label>
-      <input
-        v-model="name"
-        type="text"
-        class="w-full font-body border border-line rounded-lg px-3 py-2.5 bg-card text-ink outline-none focus:border-pine"
-      >
-    </div>
-
-    <!-- Currency is intentionally NOT editable here — existing expenses'
-         amountHome is frozen against these two currencies, so changing
-         either after the fact would silently invalidate every past
-         conversion. Shown as plain read-only text, not a disabled input,
-         so there's no control to even attempt to edit. -->
-    <div class="flex gap-3">
-      <div class="flex-1">
-        <p class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.tripCurrency') }}</p>
-        <p class="w-full font-mono border border-line rounded-lg px-3 py-2.5 bg-line/40 text-muted">
-          {{ trip.tripCurrency }}
-        </p>
-      </div>
-      <div class="flex-1">
-        <p class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.homeCurrency') }}</p>
-        <p class="w-full font-mono border border-line rounded-lg px-3 py-2.5 bg-line/40 text-muted">
-          {{ trip.homeCurrency }}
-        </p>
-      </div>
-    </div>
-
-    <div class="flex gap-3">
-      <div class="flex-1">
-        <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.startDate') }}</label>
+  <form class="flex flex-col h-full min-h-0" @submit.prevent="handleSave">
+    <div class="flex-1 overflow-y-auto flex flex-col gap-5">
+      <div>
+        <label class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('tripForm.name') }}</label>
         <input
-          v-model="startDate"
-          type="date"
-          class="w-full font-mono text-sm border border-line rounded-lg px-3 py-2 bg-card text-ink"
+          v-model="name"
+          type="text"
+          class="w-full font-body border border-line rounded-input px-3.5 py-3.5 bg-card text-ink outline-none focus:border-pine"
         >
       </div>
-      <div class="flex-1">
-        <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.endDate') }}</label>
+
+      <!-- Currency is intentionally NOT editable here — existing expenses'
+           amountHome is frozen against these two currencies, so changing
+           either after the fact would silently invalidate every past
+           conversion. Shown as plain read-only text, not a disabled input,
+           so there's no control to even attempt to edit. -->
+      <div class="flex gap-3">
+        <div class="flex-1">
+          <p class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('tripForm.tripCurrency') }}</p>
+          <p class="w-full font-mono border border-line rounded-input px-3.5 py-3.5 bg-line/40 text-muted">
+            {{ trip.tripCurrency }}
+          </p>
+        </div>
+        <div class="flex-1">
+          <p class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('tripForm.homeCurrency') }}</p>
+          <p class="w-full font-mono border border-line rounded-input px-3.5 py-3.5 bg-line/40 text-muted">
+            {{ trip.homeCurrency }}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <div class="flex-1">
+          <label class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('tripForm.startDate') }}</label>
+          <input
+            v-model="startDate"
+            type="date"
+            class="w-full font-mono text-sm border border-line rounded-input px-3 py-2.5 bg-card text-ink"
+          >
+        </div>
+        <div class="flex-1">
+          <label class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('tripForm.endDate') }}</label>
+          <input
+            v-model="endDate"
+            type="date"
+            class="w-full font-mono text-sm border border-line rounded-input px-3 py-2.5 bg-card text-ink"
+          >
+        </div>
+      </div>
+
+      <div>
+        <label class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('tripForm.budget') }}</label>
         <input
-          v-model="endDate"
-          type="date"
-          class="w-full font-mono text-sm border border-line rounded-lg px-3 py-2 bg-card text-ink"
+          v-model.number="budget"
+          type="number"
+          min="0"
+          :placeholder="$t('tripForm.budgetPlaceholder')"
+          class="w-full font-mono border border-line rounded-input px-3 py-2.5 bg-card text-ink"
         >
       </div>
-    </div>
 
-    <div>
-      <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.budget') }}</label>
-      <input
-        v-model.number="budget"
-        type="number"
-        min="0"
-        :placeholder="$t('tripForm.budgetPlaceholder')"
-        class="w-full font-mono border border-line rounded-lg px-3 py-2 bg-card text-ink"
-      >
-    </div>
+      <p v-if="saveError" class="font-body text-xs text-danger text-center">
+        {{ saveError }}
+      </p>
 
-    <p v-if="saveError" class="font-body text-xs text-danger text-center" role="status">
-      {{ saveError }}
-    </p>
-
-    <div class="flex gap-3 mt-2">
       <button
         type="button"
-        class="flex-1 font-body text-sm font-medium text-muted border border-line rounded-lg px-4 py-3"
+        class="font-body text-xs text-danger text-center"
+        @click="handleDelete"
+      >
+        {{ $t('tripForm.deleteTrip') }}
+      </button>
+    </div>
+
+    <div class="pt-4 border-t border-line shrink-0 flex gap-3">
+      <button
+        type="button"
+        class="flex-1 font-body text-sm font-semibold text-ink border border-line rounded-input py-3.5"
         @click="emit('cancel')"
       >
         {{ $t('common.cancel') }}
@@ -120,18 +130,10 @@ function handleDelete() {
       <button
         type="submit"
         :disabled="!canSave"
-        class="flex-1 font-body text-sm font-semibold text-white bg-pine rounded-lg px-4 py-3 disabled:opacity-40"
+        class="flex-1 font-body text-sm font-semibold text-white bg-pine rounded-input py-3.5 disabled:opacity-40"
       >
         {{ $t('common.save') }}
       </button>
     </div>
-
-    <button
-      type="button"
-      class="font-body text-xs text-danger text-center mt-2"
-      @click="handleDelete"
-    >
-      {{ $t('tripForm.deleteTrip') }}
-    </button>
   </form>
 </template>

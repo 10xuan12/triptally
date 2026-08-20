@@ -1,9 +1,15 @@
 import type { Config } from 'tailwindcss'
 
-// Design direction: "精簡現代工具" (lean modern tool) — near-white surfaces,
-// near-black text, one deep pine accent, minimal ornament. Superseded the
-// earlier warm "Departure Board" travel-journal direction (dashed ticket
-// edges, emoji, pill buttons, sage/cream palette).
+// Design direction: "精簡現代工具" (lean modern tool), Wise/Revolut-style
+// fintech-tool feel — near-white surfaces, near-black text, one deep pine
+// accent, minimal ornament. This is the 2026-08 visual reset (see the
+// "TripTally 視覺重整" design doc): same five color tokens as before, but
+// Space Grotesk + IBM Plex Sans are dropped in favor of a single UI
+// typeface (Public Sans) so headings and body text read as one family;
+// IBM Plex Mono stays for every number (amounts, rates, dates). Corner
+// radii are tightened and made consistent (10–16px everywhere, no pills/
+// full-round except thin progress-bar tracks) — see main.css and each
+// component for the specific scale in use.
 export default <Partial<Config>>{
   content: [
     './components/**/*.{vue,js,ts}',
@@ -23,12 +29,18 @@ export default <Partial<Config>>{
         line: '#E5E7E3'      // hairline borders — necessary separators only, not decorative
       },
       fontFamily: {
-        display: ['"Space Grotesk"', 'sans-serif'], // numbers, totals, headings
-        body: ['"IBM Plex Sans"', 'sans-serif'],     // UI text
-        mono: ['"IBM Plex Mono"', 'monospace']       // rates, timestamps, receipts
+        // `display` and `body` both resolve to Public Sans now — kept as
+        // two separate keys (rather than renaming every `font-display`/
+        // `font-body` usage across the app) so this file is the only place
+        // that needed to change to adopt the new type direction.
+        display: ['"Public Sans"', 'sans-serif'],
+        body: ['"Public Sans"', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'monospace']       // rates, timestamps, all figures
       },
       borderRadius: {
-        card: '18px'
+        card: '14px',   // trip cards, list-style cards (was 18px)
+        hero: '16px',   // FAB, hero total-spent card, largest surfaces
+        input: '10px'   // text inputs, segmented tabs, small stat tiles
       }
     }
   }

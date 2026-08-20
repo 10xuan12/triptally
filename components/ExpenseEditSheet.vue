@@ -142,56 +142,58 @@ onUnmounted(() => {
 
     <form class="px-5 flex-1 flex flex-col gap-4 pb-6 overflow-y-auto min-h-0" @submit.prevent="handleSave">
       <div>
-        <div class="flex items-center justify-between mb-2">
-          <label class="font-body text-xs font-medium text-muted">{{ $t('quickAdd.amount') }}</label>
-          <div class="flex gap-1.5">
-            <button
-              type="button"
-              class="font-mono text-xs rounded-lg px-2.5 py-1 border"
-              :class="amountCurrencyMode === 'trip' ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'"
-              @click="amountCurrencyMode = 'trip'"
-            >
-              {{ tripCurrency }}
-            </button>
-            <button
-              type="button"
-              class="font-mono text-xs rounded-lg px-2.5 py-1 border"
-              :class="amountCurrencyMode === 'home' ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'"
-              @click="amountCurrencyMode = 'home'"
-            >
-              {{ homeCurrency }}
-            </button>
-          </div>
-        </div>
-        <input
-          v-model="amountText"
-          type="text"
-          inputmode="decimal"
-          class="w-full font-display text-5xl font-semibold text-ink bg-transparent outline-none border-b-2 border-line focus:border-pine pb-2"
-        >
-        <p v-if="amountCurrencyMode === 'trip'" class="font-mono text-sm text-muted mt-2 min-h-[1.25em]">
-          <template v-if="amountValue > 0 && tripRateInfo">
-            {{ tripCurrency }} {{ formatNumber(amountValue) }} ≈ {{ homeCurrency }} {{ formatNumber(previewHomeAmount) }}
-          </template>
-        </p>
-        <template v-if="amountCurrencyMode === 'trip'">
-          <p v-if="rateError" class="font-body text-xs text-danger mt-1">{{ rateError }}</p>
-          <p v-else-if="loadingRate" class="font-mono text-xs text-muted mt-1">{{ $t('expenseEdit.loadingRate') }}</p>
-          <p v-else-if="tripRateInfo" class="font-mono text-xs text-muted mt-1">
-            {{ initialMode === 'trip' ? $t('expenseEdit.frozenRate') : $t('expenseEdit.freshRate') }}
+        <div class="flex flex-col items-center text-center py-2">
+          <label class="font-body text-xs font-medium text-muted uppercase tracking-wide">
+            {{ $t('quickAdd.amount') }}（{{ amountCurrencyMode === 'trip' ? tripCurrency : homeCurrency }}）
+          </label>
+          <input
+            v-model="amountText"
+            type="text"
+            inputmode="decimal"
+            class="w-full font-mono text-center text-5xl font-bold text-ink bg-transparent outline-none mt-1"
+          >
+          <p v-if="amountCurrencyMode === 'trip'" class="font-mono text-sm text-muted mt-1 min-h-[1.25em]">
+            <template v-if="amountValue > 0 && tripRateInfo">
+              ≈ {{ homeCurrency }} {{ formatNumber(previewHomeAmount) }}
+            </template>
           </p>
-        </template>
+          <template v-if="amountCurrencyMode === 'trip'">
+            <p v-if="rateError" class="font-body text-xs text-danger mt-1">{{ rateError }}</p>
+            <p v-else-if="loadingRate" class="font-mono text-xs text-muted mt-1">{{ $t('expenseEdit.loadingRate') }}</p>
+            <p v-else-if="tripRateInfo" class="font-mono text-xs text-muted mt-1">
+              {{ initialMode === 'trip' ? $t('expenseEdit.frozenRate') : $t('expenseEdit.freshRate') }}
+            </p>
+          </template>
+        </div>
+        <div class="flex border border-line rounded-input overflow-hidden mt-3">
+          <button
+            type="button"
+            class="flex-1 text-center py-2.5 font-body text-sm font-semibold"
+            :class="amountCurrencyMode === 'trip' ? 'bg-pine text-white' : 'bg-card text-ink'"
+            @click="amountCurrencyMode = 'trip'"
+          >
+            {{ $t('quickAdd.amountIn', { currency: tripCurrency }) }}
+          </button>
+          <button
+            type="button"
+            class="flex-1 text-center py-2.5 font-body text-sm font-semibold"
+            :class="amountCurrencyMode === 'home' ? 'bg-pine text-white' : 'bg-card text-ink'"
+            @click="amountCurrencyMode = 'home'"
+          >
+            {{ $t('quickAdd.amountIn', { currency: homeCurrency }) }}
+          </button>
+        </div>
       </div>
 
       <div>
-        <p class="font-body text-xs font-medium text-muted mb-2">{{ $t('quickAdd.category') }}</p>
+        <p class="font-body text-[13px] font-semibold text-ink mb-2.5">{{ $t('quickAdd.category') }}</p>
         <div class="flex flex-wrap gap-2">
           <button
             v-for="key in EXPENSE_CATEGORIES"
             :key="key"
             type="button"
-            class="font-body text-sm rounded-lg px-3 py-1.5 border"
-            :class="category === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'"
+            class="font-body text-sm rounded-lg px-3.5 py-2 border"
+            :class="category === key ? 'bg-pine text-white border-pine font-semibold' : 'bg-card text-ink border-line font-medium'"
             @click="category = key"
           >
             {{ $t(`category.${key}`) }}
@@ -200,14 +202,14 @@ onUnmounted(() => {
       </div>
 
       <div>
-        <p class="font-body text-xs font-medium text-muted mb-2">{{ $t('quickAdd.paymentMethod') }}</p>
+        <p class="font-body text-[13px] font-semibold text-ink mb-2.5">{{ $t('quickAdd.paymentMethod') }}</p>
         <div class="flex flex-wrap gap-2">
           <button
             v-for="key in PAYMENT_METHODS"
             :key="key"
             type="button"
-            class="font-body text-sm rounded-lg px-3 py-1.5 border"
-            :class="paymentMethod === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'"
+            class="flex-1 font-body text-[13px] text-center rounded-lg px-2 py-2.5 border"
+            :class="paymentMethod === key ? 'bg-pine text-white border-pine font-semibold' : 'bg-card text-ink border-line font-medium'"
             @click="paymentMethod = key"
           >
             {{ $t(`payment.${key}`) }}
@@ -216,21 +218,21 @@ onUnmounted(() => {
       </div>
 
       <div>
-        <label class="font-body text-xs font-medium text-muted block mb-2">{{ $t('quickAdd.date') }}</label>
+        <label class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('quickAdd.date') }}</label>
         <input
           v-model="date"
           type="date"
-          class="w-full font-mono border border-line rounded-lg px-3 py-2 bg-card text-ink"
+          class="w-full font-mono border border-line rounded-input px-3 py-2.5 bg-card text-ink"
         >
       </div>
 
       <div>
-        <label class="font-body text-xs font-medium text-muted block mb-2">{{ $t('expenseEdit.note') }}</label>
+        <label class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('expenseEdit.note') }}</label>
         <input
           v-model="note"
           type="text"
           :placeholder="$t('expenseEdit.notePlaceholder')"
-          class="w-full font-body border border-line rounded-lg px-3 py-2 bg-card text-ink"
+          class="w-full font-body border border-line rounded-input px-3 py-2.5 bg-card text-ink"
         >
       </div>
 
@@ -238,11 +240,11 @@ onUnmounted(() => {
         {{ saveError }}
       </p>
 
-      <div class="mt-auto pt-2 shrink-0">
+      <div class="mt-auto pt-4 border-t border-line shrink-0">
         <button
           type="submit"
           :disabled="!canSave"
-          class="w-full font-body text-base font-semibold text-white bg-pine rounded-lg py-4 disabled:opacity-40 active:scale-[0.98] transition-transform"
+          class="w-full font-body text-base font-bold text-white bg-pine rounded-input py-4 disabled:opacity-40 active:scale-[0.98] transition-transform"
         >
           {{ $t('common.save') }}
         </button>

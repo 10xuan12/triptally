@@ -20,22 +20,18 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
 // (formerly `oxblood`) — that color is reserved for over-budget / alert
 // states, not a plain category breakdown. One fixed shade per category
 // (not assigned by sort position) so a category keeps the same color
-// everywhere it appears. Kept exactly as originally tuned for contrast
-// against the paper surface — unrelated to this pass's palette/ornament
-// changes, left untouched per instruction.
-// The paper surface is very pale, so a truly light tint of pine reads as
-// almost invisible against it (checked: ~1.2:1 contrast at 88% lightness).
-// Narrowed the ramp's top end so even the lightest bar stays visibly
-// present; the darkest step still clears normal text-contrast levels.
-// Every bar also carries a direct category label + hover/tap tooltip + the
-// expense list below as a relief channel, per the contrast-vs-surface rule
-// for marks with a visible-labels fallback.
+// everywhere it appears.
+// Recalibrated for the 2026-08 visual reset to the exact 6-step ramp from
+// the redesign doc (#1F4536 pine itself as the darkest step, lightening
+// from there); a 7th, darker step was extrapolated beyond pine for the
+// 7th category ("other") since the source ramp only needed 6. Still the
+// same design intent as before this pass — reused, not reinvented.
 export const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
-  food: 'hsl(161, 38%, 72%)',
-  accommodation: 'hsl(161, 40%, 60%)',
-  transport: 'hsl(161, 42%, 48%)',
-  shopping: 'hsl(161, 44%, 38%)',
-  activities: 'hsl(161, 46%, 29%)',
-  entertainment: 'hsl(161, 48%, 21%)',
-  other: 'hsl(161, 50%, 13%)'
+  food: '#D8E1DC',
+  accommodation: '#AEC5BC',
+  transport: '#7D9A8D',
+  shopping: '#4C6E5F',
+  activities: '#35594A',
+  entertainment: '#1F4536',
+  other: '#122A21'
 }

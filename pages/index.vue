@@ -106,8 +106,8 @@ function handleQuickAddClick() {
     <button
       type="button"
       :aria-label="$t('home.quickAdd')"
-      class="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-pine text-white
-             font-display text-3xl leading-none shadow-lg
+      class="fixed bottom-6 right-6 w-14 h-14 rounded-hero bg-pine text-white
+             font-display text-2xl leading-none shadow-[0_8px_20px_-6px_rgba(31,69,54,0.6)]
              flex items-center justify-center active:scale-95 transition-transform"
       @click="handleQuickAddClick"
     >
@@ -116,7 +116,10 @@ function handleQuickAddClick() {
 
     <ExpenseQuickAdd v-if="showQuickAdd" :trips="trips" @close="showQuickAdd = false" />
 
-    <!-- Create-trip sheet -->
+    <!-- Create-trip sheet — a fixed-height flex column so the field list
+         scrolls internally while the Create button stays pinned at the
+         bottom of the sheet, per the redesign's "save/create button is
+         always anchored to the bottom of the screen" rule. -->
     <div
       v-if="showCreate"
       class="fixed inset-x-0 z-20 flex items-end justify-center bg-ink/40"
@@ -124,10 +127,10 @@ function handleQuickAddClick() {
       @click.self="showCreate = false"
     >
       <div
-        class="w-full max-w-md bg-paper rounded-t-2xl p-5 pb-8 overflow-y-auto"
+        class="w-full max-w-md bg-paper rounded-t-2xl flex flex-col"
         :style="{ maxHeight: sheetMaxHeight }"
       >
-        <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center justify-between px-5 pt-5 pb-4 shrink-0">
           <h2 class="font-display text-xl font-semibold text-ink">{{ $t('tripForm.createTitle') }}</h2>
           <button
             type="button"
@@ -138,7 +141,7 @@ function handleQuickAddClick() {
             &times;
           </button>
         </div>
-        <TripCreateForm @created="handleCreated" @cancel="showCreate = false" />
+        <TripCreateForm class="flex-1 min-h-0 px-5 pb-5" @created="handleCreated" @cancel="showCreate = false" />
       </div>
     </div>
   </div>

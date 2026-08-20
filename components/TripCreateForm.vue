@@ -73,76 +73,93 @@ function handleSave() {
 </script>
 
 <template>
-  <form class="flex flex-col gap-4" @submit.prevent="handleSave">
-    <div>
-      <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.name') }}</label>
-      <input
-        v-model="name"
-        type="text"
-        autofocus
-        :placeholder="$t('tripForm.namePlaceholder')"
-        class="w-full font-body border border-line rounded-lg px-3 py-2.5 bg-card text-ink outline-none focus:border-pine"
-      >
+  <form class="flex flex-col h-full min-h-0" @submit.prevent="handleSave">
+    <div class="flex-1 overflow-y-auto flex flex-col gap-5">
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="font-body text-[13px] font-semibold text-ink">{{ $t('tripForm.name') }}</label>
+          <span class="font-body text-[11px] font-medium text-muted">{{ $t('common.required') }}</span>
+        </div>
+        <input
+          v-model="name"
+          type="text"
+          autofocus
+          :placeholder="$t('tripForm.namePlaceholder')"
+          class="w-full font-body border border-line rounded-input px-3.5 py-3.5 bg-card text-ink outline-none focus:border-pine"
+        >
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="font-body text-[13px] font-semibold text-ink">{{ $t('tripForm.tripCurrency') }}</label>
+          <span class="font-body text-[11px] font-medium text-muted">{{ $t('common.required') }}</span>
+        </div>
+        <CurrencySelect
+          v-model="tripCurrency"
+          :label="null"
+          :placeholder="$t('tripForm.tripCurrencyPlaceholder')"
+          :options="currencyCodes"
+        />
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="font-body text-[13px] font-semibold text-ink">{{ $t('tripForm.homeCurrency') }}</label>
+          <span class="font-body text-[11px] font-medium text-muted">{{ $t('common.required') }}</span>
+        </div>
+        <CurrencySelect
+          v-model="homeCurrency"
+          :label="null"
+          :placeholder="$t('tripForm.homeCurrencyPlaceholder')"
+          :options="currencyCodes"
+        />
+      </div>
+
+      <details>
+        <summary class="font-body text-sm font-semibold text-ink cursor-pointer select-none py-1">
+          {{ $t('tripForm.moreOptions') }}
+        </summary>
+        <div class="mt-4 flex flex-col gap-4">
+          <div class="flex gap-3">
+            <div class="flex-1">
+              <label class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('tripForm.startDate') }}</label>
+              <input
+                v-model="startDate"
+                type="date"
+                class="w-full font-mono text-sm border border-line rounded-input px-3 py-2.5 bg-card text-ink"
+              >
+            </div>
+            <div class="flex-1">
+              <label class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('tripForm.endDate') }}</label>
+              <input
+                v-model="endDate"
+                type="date"
+                class="w-full font-mono text-sm border border-line rounded-input px-3 py-2.5 bg-card text-ink"
+              >
+            </div>
+          </div>
+          <div>
+            <label class="font-body text-[13px] font-semibold text-ink block mb-1.5">{{ $t('tripForm.budget') }}</label>
+            <input
+              v-model.number="budget"
+              type="number"
+              min="0"
+              :placeholder="$t('tripForm.budgetPlaceholder')"
+              class="w-full font-mono border border-line rounded-input px-3 py-2.5 bg-card text-ink"
+            >
+          </div>
+        </div>
+      </details>
+
+      <p v-if="saveError" class="font-body text-xs text-danger text-center">
+        {{ saveError }}
+      </p>
     </div>
 
-    <CurrencySelect
-      v-model="tripCurrency"
-      :label="$t('tripForm.tripCurrency')"
-      :placeholder="$t('tripForm.tripCurrencyPlaceholder')"
-      :options="currencyCodes"
-    />
-
-    <CurrencySelect
-      v-model="homeCurrency"
-      :label="$t('tripForm.homeCurrency')"
-      :placeholder="$t('tripForm.homeCurrencyPlaceholder')"
-      :options="currencyCodes"
-    />
-
-    <details>
-      <summary class="font-body text-sm text-pine cursor-pointer select-none">
-        {{ $t('tripForm.moreOptions') }}
-      </summary>
-      <div class="mt-3 flex flex-col gap-3">
-        <div class="flex gap-3">
-          <div class="flex-1">
-            <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.startDate') }}</label>
-            <input
-              v-model="startDate"
-              type="date"
-              class="w-full font-mono text-sm border border-line rounded-lg px-3 py-2 bg-card text-ink"
-            >
-          </div>
-          <div class="flex-1">
-            <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.endDate') }}</label>
-            <input
-              v-model="endDate"
-              type="date"
-              class="w-full font-mono text-sm border border-line rounded-lg px-3 py-2 bg-card text-ink"
-            >
-          </div>
-        </div>
-        <div>
-          <label class="font-body text-xs font-medium text-muted block mb-1">{{ $t('tripForm.budget') }}</label>
-          <input
-            v-model.number="budget"
-            type="number"
-            min="0"
-            :placeholder="$t('tripForm.budgetPlaceholder')"
-            class="w-full font-mono border border-line rounded-lg px-3 py-2 bg-card text-ink"
-          >
-        </div>
-      </div>
-    </details>
-
-    <p v-if="saveError" class="font-body text-xs text-danger text-center" role="status">
-      {{ saveError }}
-    </p>
-
-    <div class="flex gap-3 mt-2">
+    <div class="pt-4 border-t border-line shrink-0 flex gap-3">
       <button
         type="button"
-        class="flex-1 font-body text-sm font-medium text-muted border border-line rounded-lg px-4 py-3"
+        class="flex-1 font-body text-sm font-semibold text-ink border border-line rounded-input py-3.5"
         @click="emit('cancel')"
       >
         {{ $t('common.cancel') }}
@@ -150,7 +167,7 @@ function handleSave() {
       <button
         type="submit"
         :disabled="!canSave"
-        class="flex-1 font-body text-sm font-semibold text-white bg-pine rounded-lg px-4 py-3 disabled:opacity-40"
+        class="flex-1 font-body text-sm font-semibold text-white bg-pine rounded-input py-3.5 disabled:opacity-40"
       >
         {{ $t('tripForm.createTitle') }}
       </button>
