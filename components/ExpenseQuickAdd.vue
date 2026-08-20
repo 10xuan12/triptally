@@ -41,8 +41,17 @@ const saving = ref(false)
 const savedMessage = ref('')
 const saveError = ref('')
 
+// Which currency the amount above is entered in. Real trips often need
+// entries in the home currency too — pre-booked flights/hotels paid before
+// departure, in home-currency card statements — where a trip→home rate
+// isn't just unnecessary, it'd be wrong to apply one to an amount that was
+// never actually in the trip currency.
+const amountCurrencyMode = ref<'trip' | 'home'>('trip')
+
 // Rate is fetched once per selected trip (not per keystroke) and reused
 // for every expense saved in this session, per BUILD_BRIEF Stage 4 §3.
+// Only meaningful in 'trip' mode — home-currency entries are always a
+// trivial 1:1, no fetch involved at all.
 const rateInfo = ref<{ rate: number; isCached: boolean; fetchedAt: string } | null>(null)
 const rateError = ref('')
 
@@ -61,12 +70,16 @@ async function loadRate(trip: Trip) {
   }
 }
 
+// Fetched regardless of which mode is currently active, so the rate is
+// already sitting there ready the moment the user switches to 'trip' mode.
 watch(selectedTrip, (trip) => {
   if (trip) loadRate(trip)
 }, { immediate: true })
 
 const previewHomeAmount = computed(() => {
-  if (!rateInfo.value || amountValue.value <= 0) return 0
+  if (amountValue.value <= 0) return 0
+  if (amountCurrencyMode.value === 'home') return amountValue.value
+  if (!rateInfo.value) return 0
   return amountValue.value * rateInfo.value.rate
 })
 
@@ -83,7 +96,7 @@ const canSave = computed(() =>
   amountValue.value > 0 &&
   !!category.value &&
   !!paymentMethod.value &&
-  !!rateInfo.value &&
+  (amountCurrencyMode.value === 'home' || !!rateInfo.value) &&
   !saving.value
 )
 
@@ -94,27 +107,30 @@ function resetForNextExpense() {
   date.value = todayISO()
   note.value = ''
   showNoteInput.value = false
+  amountCurrencyMode.value = 'trip'
   // Deliberately keep selectedTrip + rateInfo as-is — re-picking the trip
   // or re-fetching the rate for every single expense would add exactly
   // the friction Stage 4 is trying to eliminate.
 }
 
 async function handleSave() {
-  if (!canSave.value || !selectedTrip.value || !rateInfo.value) return
+  if (!canSave.value || !selectedTrip.value) return
+  const isHome = amountCurrencyMode.value === 'home'
+  if (!isHome && !rateInfo.value) return
   saving.value = true
   saveError.value = ''
   try {
     addExpense({
       tripId: selectedTrip.value.id,
       amountForeign: amountValue.value,
-      currencyForeign: selectedTrip.value.tripCurrency,
-      rateUsed: rateInfo.value.rate,
-      amountHome: amountValue.value * rateInfo.value.rate,
+      currencyForeign: isHome ? selectedTrip.value.homeCurrency : selectedTrip.value.tripCurrency,
+      rateUsed: isHome ? 1 : rateInfo.value!.rate,
+      amountHome: isHome ? amountValue.value : amountValue.value * rateInfo.value!.rate,
       category: category.value!,
       paymentMethod: paymentMethod.value!,
       date: date.value,
       note: note.value.trim() || undefined,
-      rateIsCached: rateInfo.value.isCached
+      rateIsCached: isHome ? false : rateInfo.value!.isCached
     })
     savedMessage.value = '已儲存'
     resetForNextExpense()
@@ -165,134 +181,58 @@ onUnmounted(() => {
 <template>
   <div class="fixed inset-x-0 z-30 bg-paper flex flex-col" :style="viewportStyle">
     <header class="flex items-center justify-between px-5 pt-6 pb-4 shrink-0">
-      <button type="button" aria-label="關閉" class="text-muted text-2xl leading-none" @click="handleClose">
-        &times;
-      </button>
-      <p v-if="selectedTrip" class="font-mono text-xs text-muted uppercase tracking-widest">
-        {{ selectedTrip.name }}
-      </p>
+      <button type="button" aria-label="關閉" class="text-muted text-2xl leading-none" @click="handleClose">&times;</button>
+      <p v-if="selectedTrip" class="font-mono text-xs text-muted uppercase tracking-widest">{{ selectedTrip.name }}</p>
       <span class="w-6" aria-hidden="true" />
     </header>
-
-    <!-- Step: pick a trip (only shown when there's more than one) -->
     <div v-if="!selectedTrip" class="px-5 flex-1 flex flex-col gap-3 overflow-y-auto min-h-0">
       <p class="font-body text-sm text-muted mb-1">選擇要記帳的行程</p>
-      <button
-        v-for="trip in trips"
-        :key="trip.id"
-        type="button"
-        class="ticket p-4 pt-4 text-left"
-        @click="selectedTripId = trip.id"
-      >
+      <button v-for="trip in trips" :key="trip.id" type="button" class="ticket p-4 pt-4 text-left" @click="selectedTripId = trip.id">
         <p class="font-display text-base font-semibold text-ink">{{ trip.name }}</p>
         <p class="font-mono text-xs text-muted mt-1">{{ trip.tripCurrency }} → {{ trip.homeCurrency }}</p>
       </button>
       <p v-if="trips.length === 0" class="font-body text-sm text-muted">尚未建立行程。</p>
     </div>
-
-    <!-- Step: quick-add form -->
     <form v-else class="px-5 flex-1 flex flex-col gap-4 pb-6 overflow-y-auto min-h-0" @submit.prevent="handleSave">
       <div>
-        <label class="font-body text-xs font-medium text-muted block mb-2">
-          金額（{{ selectedTrip.tripCurrency }}）
-        </label>
-        <input
-          ref="amountInputEl"
-          v-model="amountText"
-          type="text"
-          inputmode="decimal"
-          autofocus
-          placeholder="0"
-          class="w-full font-display text-5xl font-semibold text-ink bg-transparent outline-none border-b-2 border-line focus:border-pine pb-2"
-        >
-        <p class="font-mono text-sm text-muted mt-2 min-h-[1.25em]">
-          <template v-if="amountValue > 0 && rateInfo">
-            {{ selectedTrip.tripCurrency }} {{ formatNumber(amountValue) }} ≈ {{ selectedTrip.homeCurrency }} {{ formatNumber(previewHomeAmount) }}
-          </template>
+        <div class="flex items-center justify-between mb-2">
+          <label class="font-body text-xs font-medium text-muted">金額</label>
+          <div class="flex gap-1.5">
+            <button type="button" class="font-mono text-xs rounded-lg px-2.5 py-1 border" :class="amountCurrencyMode === 'trip' ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="amountCurrencyMode = 'trip'">{{ selectedTrip.tripCurrency }}</button>
+            <button type="button" class="font-mono text-xs rounded-lg px-2.5 py-1 border" :class="amountCurrencyMode === 'home' ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="amountCurrencyMode = 'home'">{{ selectedTrip.homeCurrency }}</button>
+          </div>
+        </div>
+        <input ref="amountInputEl" v-model="amountText" type="text" inputmode="decimal" autofocus placeholder="0" class="w-full font-display text-5xl font-semibold text-ink bg-transparent outline-none border-b-2 border-line focus:border-pine pb-2">
+        <p v-if="amountCurrencyMode === 'trip'" class="font-mono text-sm text-muted mt-2 min-h-[1.25em]">
+          <template v-if="amountValue > 0 && rateInfo">{{ selectedTrip.tripCurrency }} {{ formatNumber(amountValue) }} ≈ {{ selectedTrip.homeCurrency }} {{ formatNumber(previewHomeAmount) }}</template>
         </p>
-        <p v-if="rateError" class="font-body text-xs text-danger mt-1">{{ rateError }}</p>
-        <p v-else-if="rateInfo?.isCached" class="font-mono text-xs text-muted mt-1">
-          使用快取匯率 · {{ formatTime(rateInfo.fetchedAt) }}
-        </p>
+        <p v-if="amountCurrencyMode === 'trip' && rateError" class="font-body text-xs text-danger mt-1">{{ rateError }}</p>
+        <p v-else-if="amountCurrencyMode === 'trip' && rateInfo?.isCached" class="font-mono text-xs text-muted mt-1">使用快取匯率 · {{ formatTime(rateInfo.fetchedAt) }}</p>
       </div>
-
       <div>
         <p class="font-body text-xs font-medium text-muted mb-2">分類</p>
         <div class="flex flex-wrap gap-2">
-          <button
-            v-for="(meta, key) in CATEGORY_META"
-            :key="key"
-            type="button"
-            class="font-body text-sm rounded-lg px-3 py-1.5 border"
-            :class="category === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'"
-            @click="category = key as ExpenseCategory"
-          >
-            {{ meta.label }}
-          </button>
+          <button v-for="(meta, key) in CATEGORY_META" :key="key" type="button" class="font-body text-sm rounded-lg px-3 py-1.5 border" :class="category === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="category = key as ExpenseCategory">{{ meta.label }}</button>
         </div>
       </div>
-
       <div>
         <p class="font-body text-xs font-medium text-muted mb-2">付款方式</p>
         <div class="flex flex-wrap gap-2">
-          <button
-            v-for="(meta, key) in PAYMENT_META"
-            :key="key"
-            type="button"
-            class="font-body text-sm rounded-lg px-3 py-1.5 border"
-            :class="paymentMethod === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'"
-            @click="paymentMethod = key as PaymentMethod"
-          >
-            {{ meta.label }}
-          </button>
+          <button v-for="(meta, key) in PAYMENT_META" :key="key" type="button" class="font-body text-sm rounded-lg px-3 py-1.5 border" :class="paymentMethod === key ? 'bg-pine text-white border-pine' : 'bg-pine/10 text-pine border-pine/20'" @click="paymentMethod = key as PaymentMethod">{{ meta.label }}</button>
         </div>
       </div>
-
       <div>
         <label class="font-body text-xs font-medium text-muted block mb-2">日期</label>
-        <input
-          v-model="date"
-          type="date"
-          class="w-full font-mono border border-line rounded-lg px-3 py-2 bg-card text-ink"
-        >
+        <input v-model="date" type="date" class="w-full font-mono border border-line rounded-lg px-3 py-2 bg-card text-ink">
       </div>
-
-      <!-- Optional note — collapsed to a bare text link by default so it
-           never displaces the save button; expands to a single-line input
-           on demand. Never required: canSave doesn't reference it. -->
       <div>
-        <button
-          v-if="!showNoteInput"
-          type="button"
-          class="font-body text-xs text-pine"
-          @click="showNoteInput = true"
-        >
-          + 加備註
-        </button>
-        <input
-          v-else
-          v-model="note"
-          type="text"
-          placeholder="備註（選填），例如：河粉"
-          class="w-full font-body border border-line rounded-lg px-3 py-2 bg-card text-ink"
-        >
+        <button v-if="!showNoteInput" type="button" class="font-body text-xs text-pine" @click="showNoteInput = true">+ 加備註</button>
+        <input v-else v-model="note" type="text" placeholder="備註（選填），例如：河粉" class="w-full font-body border border-line rounded-lg px-3 py-2 bg-card text-ink">
       </div>
-
-      <p v-if="savedMessage" class="font-body text-xs text-pine text-center" role="status">
-        {{ savedMessage }}
-      </p>
-      <p v-if="saveError" class="font-body text-xs text-danger text-center" role="status">
-        {{ saveError }}
-      </p>
-
+      <p v-if="savedMessage" class="font-body text-xs text-pine text-center" role="status">{{ savedMessage }}</p>
+      <p v-if="saveError" class="font-body text-xs text-danger text-center" role="status">{{ saveError }}</p>
       <div class="mt-auto pt-2 shrink-0">
-        <button
-          type="submit"
-          :disabled="!canSave"
-          class="w-full font-body text-base font-semibold text-white bg-pine rounded-lg py-4 disabled:opacity-40 active:scale-[0.98] transition-transform"
-        >
-          儲存
-        </button>
+        <button type="submit" :disabled="!canSave" class="w-full font-body text-base font-semibold text-white bg-pine rounded-lg py-4 disabled:opacity-40 active:scale-[0.98] transition-transform">儲存</button>
       </div>
     </form>
   </div>

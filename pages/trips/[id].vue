@@ -294,16 +294,18 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <!-- Expense list, grouped by date -->
+      <!-- Expense list, grouped by date — date headers bigger/bolder with
+           more spacing, and every figure in this section is one Tailwind
+           step up from where it started, for on-the-go readability. -->
       <section class="pt-8 border-t border-line">
         <p class="font-body text-xs font-medium text-muted mb-4">花費紀錄</p>
         <p v-if="groupedByDate.length === 0" class="font-body text-sm text-muted text-center py-6">
           尚無花費紀錄
         </p>
-        <div v-for="group in groupedByDate" :key="group.date" class="mb-6">
-          <div class="flex items-baseline justify-between mb-1">
-            <p class="font-mono text-xs text-muted">{{ formatDateLabel(group.date) }}</p>
-            <p class="font-mono text-xs text-muted">{{ formatMoney(group.dayTotal) }} {{ trip.homeCurrency }}</p>
+        <div v-for="group in groupedByDate" :key="group.date" class="mb-8">
+          <div class="flex items-baseline justify-between mb-3">
+            <p class="font-mono text-base font-bold text-ink">{{ formatDateLabel(group.date) }}</p>
+            <p class="font-mono text-sm text-muted">{{ formatMoney(group.dayTotal) }} {{ trip.homeCurrency }}</p>
           </div>
           <div class="flex flex-col divide-y divide-line">
             <div v-for="e in group.items" :key="e.id">
@@ -315,23 +317,25 @@ onUnmounted(() => {
                 @click="toggleExpanded(e.id)"
               >
                 <div class="min-w-0">
-                  <p class="font-body text-sm text-ink">
+                  <p class="font-body text-base text-ink">
                     {{ CATEGORY_META[e.category].label }}
                   </p>
-                  <p v-if="e.note" class="font-body text-xs text-muted mt-0.5">
+                  <p v-if="e.note" class="font-body text-sm text-muted mt-0.5">
                     {{ e.note }}
                   </p>
-                  <p class="font-mono text-xs text-muted mt-0.5">
+                  <p class="font-mono text-sm text-muted mt-0.5">
                     {{ PAYMENT_META[e.paymentMethod].label }}
                     <span v-if="e.rateIsCached"> · 快取匯率</span>
                   </p>
                 </div>
                 <div class="text-right shrink-0">
-                  <p class="font-mono text-sm font-semibold text-ink">
+                  <p class="font-mono text-base font-semibold text-ink">
                     {{ trip.homeCurrency }} {{ formatMoney(e.amountHome) }}
                   </p>
-                  <p class="font-mono text-xs text-muted mt-0.5">
-                    {{ trip.tripCurrency }} {{ formatMoney(e.amountForeign) }}
+                  <!-- Already in home currency — showing it again as
+                       "TWD 5000 / TWD 5000" would be pure noise. -->
+                  <p v-if="e.currencyForeign !== trip.homeCurrency" class="font-mono text-sm text-muted mt-0.5">
+                    {{ e.currencyForeign }} {{ formatMoney(e.amountForeign) }}
                   </p>
                 </div>
               </button>

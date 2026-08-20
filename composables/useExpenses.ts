@@ -38,12 +38,24 @@ export interface AddExpenseInput {
   rateIsCached: boolean
 }
 
-// Deliberately excludes rateUsed, amountHome, tripId, currencyForeign,
-// rateIsCached — none of those are editable after creation. Amount edits
-// only ever change `amountForeign`; `amountHome` is always re-derived from
-// the existing frozen `rateUsed`, never from a fresh rate.
+// `amountHome` is deliberately absent — it's ALWAYS re-derived as
+// `amountForeign * rateUsed` inside updateExpense(), never settable
+// directly, so it can never drift out of sync with those two.
+//
+// `currencyForeign`/`rateUsed`/`rateIsCached` ARE now editable (they
+// weren't before this feature), but only to support the amount-currency
+// toggle in ExpenseQuickAdd.vue/ExpenseEditSheet.vue: switching to
+// homeCurrency hardcodes rateUsed to 1; switching to tripCurrency supplies
+// a freshly fetched rate. A plain "just edit the amount/category/etc."
+// call — the common case — omits these three entirely, so they fall back
+// to the existing record's values below and rateUsed stays exactly as
+// frozen. The rule is still "never silently recalculated from a live
+// rate" — it only ever changes via this explicit, caller-driven path.
 export interface UpdateExpenseInput {
   amountForeign?: number
+  currencyForeign?: string
+  rateUsed?: number
+  rateIsCached?: boolean
   category?: ExpenseCategory
   paymentMethod?: PaymentMethod
   date?: string
@@ -105,13 +117,13 @@ export function useExpenses() {
   }
 
   /**
-   * Edits an existing expense. `rateUsed` is NEVER a param here and is
-   * never touched — it's always carried over from the existing record,
-   * hardcoded below regardless of what `updates` contains. `amountHome`
-   * is always re-derived as `amountForeign * existing.rateUsed` (the
-   * *frozen* rate), never by refetching a live rate. This is the same
-   * historical-rate rule that governs addExpense() — editing the amount
-   * later must not let a newer rate creep in.
+   * Edits an existing expense. `amountHome` is NEVER a param and is always
+   * re-derived as `amountForeign * rateUsed` below — it can't drift out of
+   * sync with those two no matter what the caller passes. `rateUsed` only
+   * changes when the caller explicitly supplies a new one (the amount-
+   * currency toggle's doing, not a side effect of editing anything else);
+   * omit it and it falls straight through from the existing record,
+   * exactly as frozen at creation time.
    */
   function updateExpense(id: string, updates: UpdateExpenseInput): Expense | null {
     const index = expenses.value.findIndex(e => e.id === id)
@@ -119,6 +131,9 @@ export function useExpenses() {
     const existing = expenses.value[index]
 
     const amountForeign = updates.amountForeign ?? existing.amountForeign
+    const currencyForeign = updates.currencyForeign ?? existing.currencyForeign
+    const rateUsed = updates.rateUsed ?? existing.rateUsed
+    const rateIsCached = updates.rateIsCached ?? existing.rateIsCached
     const category = updates.category ?? existing.category
     const paymentMethod = updates.paymentMethod ?? existing.paymentMethod
     const date = updates.date ?? existing.date
@@ -128,14 +143,14 @@ export function useExpenses() {
       id: existing.id,
       tripId: existing.tripId,
       amountForeign,
-      currencyForeign: existing.currencyForeign, // never changes post-creation
-      rateUsed: existing.rateUsed, // FROZEN — never recalculated or reassigned here
-      amountHome: amountForeign * existing.rateUsed, // re-derived from the frozen rate only
+      currencyForeign,
+      rateUsed,
+      amountHome: amountForeign * rateUsed, // always re-derived, never independently settable
       category,
       paymentMethod,
       date,
       note,
-      rateIsCached: existing.rateIsCached
+      rateIsCached
     }
 
     const next = [...expenses.value]
