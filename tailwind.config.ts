@@ -41,6 +41,18 @@ export default <Partial<Config>>{
         card: '14px',   // trip cards, list-style cards (was 18px)
         hero: '16px',   // FAB, hero total-spent card, largest surfaces
         input: '10px'   // text inputs, segmented tabs, small stat tiles
+      },
+      keyframes: {
+        // Indeterminate progress-bar sweep for the Loading/Splash screen
+        // (see README.md) — a 40%-wide fill sliding end-to-end and back.
+        'tt-bar': {
+          '0%': { transform: 'translateX(-100%)' },
+          '50%': { transform: 'translateX(150%)' },
+          '100%': { transform: 'translateX(-100%)' }
+        }
+      },
+      animation: {
+        'tt-bar': 'tt-bar 1.1s ease-in-out infinite'
       }
     }
   }
